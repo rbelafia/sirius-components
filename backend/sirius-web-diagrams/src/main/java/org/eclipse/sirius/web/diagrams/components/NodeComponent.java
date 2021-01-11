@@ -116,11 +116,7 @@ public class NodeComponent implements IComponent {
 
         INodeStyle style = nodeDescription.getStyleProvider().apply(nodeVariableManager);
 
-        //@formatter:off
-        Position position = optionalPreviousNode
-                .map(Node::getPosition)
-                .orElseGet(() -> nodePositionProvider.getNextPosition(this.props.getPreviousParentElement(), nodeSizeProvider.getSize(style, List.of())));
-        //@formatter:on
+        Position position = nodePositionProvider.getPosition(nodeId, optionalPreviousNode, this.props.getPreviousParentElement(), nodeSizeProvider, style);
 
         Position absolutePosition = this.computeAbsolutePosition(position, this.props.getParentAbsolutePosition());
         var borderNodes = this.getBorderNodes(optionalPreviousNode, nodeVariableManager, nodeId, absolutePosition);
