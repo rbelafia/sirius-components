@@ -420,7 +420,7 @@ export const DiagramWebSocketContainer = ({
         representationId,
         diagramElementId,
         newPositionX,
-        newPositionY
+        newPositionY,
       };
       updateNodePositionMutation({ variables: { input } });
     },
