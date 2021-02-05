@@ -10,17 +10,8 @@
  * Contributors:
  *     Obeo - initial API and implementation
  *******************************************************************************/
-import {
-  MoveCommand,
-  MoveMouseListener,
-  Point,
-  ResolvedHandleMove,
-  SEdge,
-  SLabel,
-  SModelElement,
-  SNode,
-  SRoutableElement,
-} from 'sprotty';
+import { MoveCommand, Point, ResolvedHandleMove, SEdge, SLabel, SModelElement, SNode, SRoutableElement } from 'sprotty';
+import { SiriusDragAndDropMouseListener } from './siriusDragAndDropMouseListener';
 
 export class SiriusMoveCommand extends MoveCommand {
   protected doMove(
@@ -80,10 +71,15 @@ export class SiriusMoveCommand extends MoveCommand {
 const isSNode = (element: SModelElement): element is SNode => {
   return element instanceof SNode;
 };
-export class SiriusMoveMouseListener extends MoveMouseListener {
+export class SiriusMoveMouseListener extends SiriusDragAndDropMouseListener {
+  intialTarget: SNode;
+  startResizePosition: Point | undefined;
+  startingPosition: Point;
+  selector: String;
+  childrenLimits: [Point | undefined, Point | undefined];
   protected snap(position: Point, element: SModelElement, isSnap: boolean): Point {
     let newPosition = super.snap(position, element, isSnap);
-    if (isSNode(element)) {
+    if (this.isSNode(element)) {
       return this.getValidPosition(element, newPosition);
     }
     return newPosition;
@@ -96,7 +92,7 @@ export class SiriusMoveMouseListener extends MoveMouseListener {
    */
   private getValidPosition(element: SNode, position: Point): Point {
     const parent = element.parent;
-    if (isSNode(parent)) {
+    if (this.isSNode(parent)) {
       const bottomRight = {
         x: position.x + element.size.width,
         y: position.y + element.size.height,

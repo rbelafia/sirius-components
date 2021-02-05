@@ -62,6 +62,7 @@ import {
   getToolSectionsQuery,
   invokeEdgeToolOnDiagramMutation,
   invokeNodeToolOnDiagramMutation,
+  updateNodeBoundsOp,
   updateNodePositionOp,
 } from './operations';
 import { canInvokeTool } from './toolServices';
@@ -304,6 +305,10 @@ export const DiagramWebSocketContainer = ({
     updateNodePositionMutation,
     { loading: updateNodePositionLoading, data: updateNodePositionData, error: updateNodePositionError },
   ] = useMutation(updateNodePositionOp);
+  const [
+    updateNodeBoundsMutation,
+    { loading: updateNodeBoundsLoading, data: updateNodeBoundsData, error: updateNodeBoundsError },
+  ] = useMutation(updateNodeBoundsOp);
   const [getToolSectionData, { loading: toolSectionLoading, data: toolSectionData }] = useLazyQuery(
     getToolSectionsQuery
   );
@@ -439,6 +444,22 @@ export const DiagramWebSocketContainer = ({
     [projectId, representationId, updateNodePositionMutation]
   );
 
+  const resizeElement = useCallback(
+    (diagramElementId, newPositionX, newPositionY, newWidth, newHeight) => {
+      const input = {
+        projectId,
+        representationId,
+        diagramElementId,
+        newPositionX,
+        newPositionY,
+        newWidth,
+        newHeight,
+      };
+      updateNodeBoundsMutation({ variables: { input } });
+    },
+    [projectId, representationId, updateNodeBoundsMutation]
+  );
+
   /**
    * Initialize the diagram server used by Sprotty in order to perform the diagram edition. This
    * initialization will be done each time we are in the loading state.
@@ -510,6 +531,7 @@ export const DiagramWebSocketContainer = ({
         deleteElements,
         invokeTool,
         moveElement,
+        resizeElement,
         editLabel,
         onSelectElement,
         getCursorOn,
@@ -527,6 +549,7 @@ export const DiagramWebSocketContainer = ({
     deleteElements,
     invokeTool,
     moveElement,
+    resizeElement,
     editLabelMutation,
     toolSections,
     selection,
@@ -660,7 +683,9 @@ export const DiagramWebSocketContainer = ({
   useEffect(() => {
     handleError(updateNodePositionLoading, updateNodePositionData, updateNodePositionError);
   }, [updateNodePositionLoading, updateNodePositionData, updateNodePositionError, handleError]);
-
+  useEffect(() => {
+    handleError(updateNodeBoundsLoading, updateNodeBoundsData, updateNodeBoundsError);
+  }, [updateNodeBoundsLoading, updateNodeBoundsData, updateNodeBoundsError, handleError]);
   useEffect(() => {
     handleError(editLabelLoading, editLabelData, editLabelError);
   }, [editLabelLoading, editLabelData, editLabelError, handleError]);
