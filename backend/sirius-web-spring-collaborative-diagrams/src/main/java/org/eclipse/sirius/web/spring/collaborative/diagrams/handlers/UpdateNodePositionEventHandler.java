@@ -12,8 +12,15 @@
  *******************************************************************************/
 package org.eclipse.sirius.web.spring.collaborative.diagrams.handlers;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
+import org.eclipse.sirius.web.collaborative.api.services.ChangeKind;
 import org.eclipse.sirius.web.collaborative.api.services.EventHandlerResponse;
 import org.eclipse.sirius.web.collaborative.api.services.Monitoring;
 import org.eclipse.sirius.web.collaborative.diagrams.api.IDiagramContext;
@@ -23,7 +30,11 @@ import org.eclipse.sirius.web.collaborative.diagrams.api.dto.UpdateNodePositionI
 import org.eclipse.sirius.web.collaborative.diagrams.api.dto.UpdateNodePositionSuccessPayload;
 import org.eclipse.sirius.web.core.api.ErrorPayload;
 import org.eclipse.sirius.web.core.api.IEditingContext;
+import org.eclipse.sirius.web.diagrams.MoveEvent;
+import org.eclipse.sirius.web.diagrams.Node;
 import org.eclipse.sirius.web.diagrams.Position;
+import org.eclipse.sirius.web.diagrams.services.api.IDiagramService;
+import org.eclipse.sirius.web.spring.collaborative.diagrams.DiagramChangeKind;
 import org.eclipse.sirius.web.spring.collaborative.diagrams.messages.ICollaborativeDiagramMessageService;
 import org.springframework.stereotype.Service;
 
@@ -40,9 +51,12 @@ public class UpdateNodePositionEventHandler implements IDiagramEventHandler {
 
     private final ICollaborativeDiagramMessageService messageService;
 
+    private final IDiagramService diagramService;
+
     private final Counter counter;
 
-    public UpdateNodePositionEventHandler(ICollaborativeDiagramMessageService messageService, MeterRegistry meterRegistry) {
+    public UpdateNodePositionEventHandler(ICollaborativeDiagramMessageService messageService, IDiagramService diagramService, MeterRegistry meterRegistry) {
+        this.diagramService = Objects.requireNonNull(diagramService);
         this.messageService = Objects.requireNonNull(messageService);
 
         // @formatter:off
@@ -66,7 +80,7 @@ public class UpdateNodePositionEventHandler implements IDiagramEventHandler {
             result = this.handleUpdateNodePosition(editingContext, diagramContext, (UpdateNodePositionInput) diagramInput);
         } else {
             String message = this.messageService.invalidInput(diagramInput.getClass().getSimpleName(), UpdateNodePositionEventHandler.class.getSimpleName());
-            result = new EventHandlerResponse(false, representation -> false, new ErrorPayload(message));
+            result = new EventHandlerResponse(ChangeKind.NOTHING, new ErrorPayload(message));
         }
         return result;
     }
@@ -78,7 +92,30 @@ public class UpdateNodePositionEventHandler implements IDiagramEventHandler {
                 .y(diagramInput.getNewPositionY())
                 .build();
         // @formatter:on
-        diagramContext.getMovedElementIDToNewPositionMap().put(diagramInput.getDiagramElementId(), newPosition);
-        return new EventHandlerResponse(true, representation -> true, new UpdateNodePositionSuccessPayload(diagramContext.getDiagram()));
+
+        Optional<Node> optionalNode = this.diagramService.findNodeById(diagramContext.getDiagram(), diagramInput.getDiagramElementId());
+
+        EventHandlerResponse result;
+        if (optionalNode.isPresent()) {
+            Set<UUID> childrenIds = this.getAllChildrenIds(optionalNode.get());
+            diagramContext.setMoveEvent(new MoveEvent(diagramInput.getDiagramElementId(), newPosition, childrenIds));
+            result = new EventHandlerResponse(DiagramChangeKind.DIAGRAM_LAYOUT_CHANGE, new UpdateNodePositionSuccessPayload(diagramContext.getDiagram()));
+        } else {
+            String message = this.messageService.nodeNotFound(String.valueOf(diagramInput.getDiagramElementId()));
+            result = new EventHandlerResponse(ChangeKind.NOTHING, new ErrorPayload(message));
+        }
+        return result;
+    }
+
+    private Set<UUID> getAllChildrenIds(Node node) {
+        Set<UUID> res = new HashSet<>();
+        List<Node> subNodes = new ArrayList<>();
+        subNodes.addAll(node.getBorderNodes());
+        subNodes.addAll(node.getChildNodes());
+        for (Node subNode : subNodes) {
+            res.add(subNode.getId());
+            res.addAll(this.getAllChildrenIds(subNode));
+        }
+        return res;
     }
 }

@@ -38,6 +38,8 @@ public class TextBoundsProvider {
 
     private static final int SPACE_FOR_ICON = 20;
 
+    private static String fontName;
+
     /**
      * Computes the text bounds for a label with the given text.
      *
@@ -55,11 +57,7 @@ public class TextBoundsProvider {
         if (labelStyle.isItalic()) {
             fontStyle = fontStyle | Font.ITALIC;
         }
-        String fontName = DEFAULT_LABEL_FONT_NAME;
-        if (!this.isDefaultFontAvailable()) {
-            fontName = FALLBACK_LABEL_FONT_NAME;
-        }
-        Font font = new Font(fontName, fontStyle, labelStyle.getFontSize());
+        Font font = new Font(this.getFontName(), fontStyle, labelStyle.getFontSize());
         Rectangle2D stringBounds = font.getStringBounds(text, FONT_RENDER_CONTEXT);
         double width = stringBounds.getWidth();
         double height = stringBounds.getHeight();
@@ -89,10 +87,21 @@ public class TextBoundsProvider {
         return new TextBounds(size, alignment);
     }
 
+    private String getFontName() {
+        if (fontName == null) {
+            if (this.isDefaultFontAvailable()) {
+                fontName = DEFAULT_LABEL_FONT_NAME;
+            } else {
+                fontName = FALLBACK_LABEL_FONT_NAME;
+            }
+        }
+        return fontName;
+    }
+
     private boolean isDefaultFontAvailable() {
         GraphicsEnvironment e = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        for (String font : e.getAvailableFontFamilyNames()) {
-            if (DEFAULT_LABEL_FONT_NAME.equals(font)) {
+        for (String currentFont : e.getAvailableFontFamilyNames()) {
+            if (DEFAULT_LABEL_FONT_NAME.equals(currentFont)) {
                 return true;
             }
         }

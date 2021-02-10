@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 Obeo.
+ * Copyright (c) 2019, 2021 Obeo and others.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -13,14 +13,12 @@
 package org.eclipse.sirius.web.spring.collaborative.diagrams;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 
 import org.eclipse.sirius.web.collaborative.diagrams.api.IDiagramContext;
 import org.eclipse.sirius.web.diagrams.Diagram;
+import org.eclipse.sirius.web.diagrams.MoveEvent;
 import org.eclipse.sirius.web.diagrams.Position;
 import org.eclipse.sirius.web.diagrams.ViewCreationRequest;
 
@@ -35,14 +33,13 @@ public class DiagramContext implements IDiagramContext {
 
     private final List<ViewCreationRequest> viewCreationRequests;
 
-    private final Map<UUID, Position> movedElementIDToNewPositionMap;
+    private MoveEvent moveEvent;
 
     private Position startingPosition;
 
     public DiagramContext(Diagram initialDiagram) {
         this.diagram = Objects.requireNonNull(initialDiagram);
         this.viewCreationRequests = new ArrayList<>();
-        this.movedElementIDToNewPositionMap = new HashMap<>();
     }
 
     @Override
@@ -61,8 +58,13 @@ public class DiagramContext implements IDiagramContext {
     }
 
     @Override
-    public Map<UUID, Position> getMovedElementIDToNewPositionMap() {
-        return this.movedElementIDToNewPositionMap;
+    public MoveEvent getMoveEvent() {
+        return this.moveEvent;
+    }
+
+    @Override
+    public void setMoveEvent(MoveEvent moveEvent) {
+        this.moveEvent = moveEvent;
     }
 
     @Override
@@ -70,7 +72,14 @@ public class DiagramContext implements IDiagramContext {
         return this.startingPosition;
     }
 
+    @Override
     public void setStartingPosition(Position startingPosition) {
         this.startingPosition = startingPosition;
+    }
+
+    @Override
+    public void reset() {
+        this.moveEvent = null;
+        this.startingPosition = null;
     }
 }

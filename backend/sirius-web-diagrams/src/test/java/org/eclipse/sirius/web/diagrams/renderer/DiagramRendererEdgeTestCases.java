@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 Obeo.
+ * Copyright (c) 2019, 2021 Obeo and others.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -89,7 +88,14 @@ public class DiagramRendererEdgeTestCases {
         // @formatter:on
 
         VariableManager variableManager = new VariableManager();
-        DiagramComponentProps props = new DiagramComponentProps(variableManager, diagramDescription, List.of(), Optional.empty(), Map.of(), Set.of(), Optional.empty());
+        // @formatter:off
+        DiagramComponentProps props = DiagramComponentProps.newDiagramComponentProps()
+                .variableManager(variableManager)
+                .diagramDescription(diagramDescription)
+                .viewCreationRequests(List.of())
+                .previousDiagram(Optional.empty())
+                .build();
+        // @formatter:on
         Element element = new Element(DiagramComponent.class, props);
         Diagram diagram = new DiagramRenderer(this.logger).render(element);
 
@@ -136,7 +142,14 @@ public class DiagramRendererEdgeTestCases {
         // @formatter:on
 
         VariableManager variableManager = new VariableManager();
-        DiagramComponentProps props = new DiagramComponentProps(variableManager, diagramDescription, List.of(), Optional.empty(), Map.of(), Set.of(), Optional.empty());
+        // @formatter:off
+        DiagramComponentProps props = DiagramComponentProps.newDiagramComponentProps()
+                .variableManager(variableManager)
+                .diagramDescription(diagramDescription)
+                .viewCreationRequests(List.of())
+                .previousDiagram(Optional.empty())
+                .build();
+        // @formatter:on
         Element element = new Element(DiagramComponent.class, props);
         Diagram diagram = new DiagramRenderer(this.logger).render(element);
 

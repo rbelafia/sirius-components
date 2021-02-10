@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 Obeo.
+ * Copyright (c) 2019, 2021 Obeo and others.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -12,14 +12,9 @@
  *******************************************************************************/
 package org.eclipse.sirius.web.spring.collaborative.diagrams;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -30,11 +25,12 @@ import org.eclipse.sirius.web.components.Element;
 import org.eclipse.sirius.web.core.api.IEditingContext;
 import org.eclipse.sirius.web.core.api.IObjectService;
 import org.eclipse.sirius.web.diagrams.Diagram;
-import org.eclipse.sirius.web.diagrams.Node;
+import org.eclipse.sirius.web.diagrams.MoveEvent;
 import org.eclipse.sirius.web.diagrams.Position;
 import org.eclipse.sirius.web.diagrams.ViewCreationRequest;
 import org.eclipse.sirius.web.diagrams.components.DiagramComponent;
 import org.eclipse.sirius.web.diagrams.components.DiagramComponentProps;
+import org.eclipse.sirius.web.diagrams.components.DiagramComponentProps.Builder;
 import org.eclipse.sirius.web.diagrams.description.DiagramDescription;
 import org.eclipse.sirius.web.diagrams.layout.api.ILayoutService;
 import org.eclipse.sirius.web.diagrams.renderer.DiagramRenderer;
@@ -88,7 +84,7 @@ public class DiagramCreationService implements IDiagramCreationService {
 
     @Override
     public Diagram create(String label, Object targetObject, DiagramDescription diagramDescription, IEditingContext editingContext) {
-        Diagram newDiagram = this.doRender(label, targetObject, editingContext, diagramDescription, List.of(), Optional.empty());
+        Diagram newDiagram = this.doRender(label, targetObject, editingContext, diagramDescription, Optional.empty());
         return this.layoutService.layout(newDiagram);
     }
 
@@ -105,16 +101,13 @@ public class DiagramCreationService implements IDiagramCreationService {
         if (optionalObject.isPresent() && optionalDiagramDescription.isPresent()) {
             Object object = optionalObject.get();
             DiagramDescription diagramDescription = optionalDiagramDescription.get();
-            List<ViewCreationRequest> viewCreationRequests = diagramContext.getViewCreationRequests();
-
-            Diagram diagram = this.doRender(previousDiagram.getLabel(), object, editingContext, diagramDescription, viewCreationRequests, Optional.of(diagramContext));
+            Diagram diagram = this.doRender(previousDiagram.getLabel(), object, editingContext, diagramDescription, Optional.of(diagramContext));
             return Optional.of(diagram);
         }
         return Optional.empty();
     }
 
-    private Diagram doRender(String label, Object targetObject, IEditingContext editingContext, DiagramDescription diagramDescription, List<ViewCreationRequest> viewCreationRequests,
-            Optional<IDiagramContext> optionalDiagramContext) {
+    private Diagram doRender(String label, Object targetObject, IEditingContext editingContext, DiagramDescription diagramDescription, Optional<IDiagramContext> optionalDiagramContext) {
 
         long start = System.currentTimeMillis();
 
@@ -123,15 +116,24 @@ public class DiagramCreationService implements IDiagramCreationService {
         variableManager.put(VariableManager.SELF, targetObject);
         variableManager.put(IEditingContext.EDITING_CONTEXT, editingContext);
 
-        Map<UUID, Position> movedElementIdToNewPositionMap = optionalDiagramContext.map(IDiagramContext::getMovedElementIDToNewPositionMap).orElseGet(() -> Map.of());
-        Set<UUID> allMovedElementIds = Set.of();
-        if (!movedElementIdToNewPositionMap.isEmpty() && optionalDiagramContext.isPresent()) {
-            allMovedElementIds = this.getRelatedElementIDs(movedElementIdToNewPositionMap.keySet(), optionalDiagramContext.get().getDiagram());
-        }
+        Optional<MoveEvent> optionalMoveEvent = optionalDiagramContext.map(IDiagramContext::getMoveEvent);
         Optional<Diagram> optionalPreviousDiagram = optionalDiagramContext.map(IDiagramContext::getDiagram);
-        Optional<Position> optionalStartingPosition = Optional.ofNullable(optionalDiagramContext.map(IDiagramContext::getStartingPosition).orElse(null));
-        DiagramComponentProps props = new DiagramComponentProps(variableManager, diagramDescription, viewCreationRequests, optionalPreviousDiagram, movedElementIdToNewPositionMap, allMovedElementIds,
-                optionalStartingPosition);
+        Optional<Position> optionalStartingPosition = optionalDiagramContext.map(IDiagramContext::getStartingPosition);
+        List<ViewCreationRequest> viewCreationRequests = optionalDiagramContext.map(IDiagramContext::getViewCreationRequests).orElse(List.of());
+        //@formatter:off
+        Builder builder = DiagramComponentProps.newDiagramComponentProps()
+                .variableManager(variableManager)
+                .diagramDescription(diagramDescription)
+                .viewCreationRequests(viewCreationRequests)
+                .previousDiagram(optionalPreviousDiagram);
+        //@formatter:on
+        if (optionalMoveEvent.isPresent()) {
+            builder.moveEvent(optionalMoveEvent.get());
+        }
+        if (optionalStartingPosition.isPresent()) {
+            builder.startingPosition(optionalStartingPosition.get());
+        }
+        DiagramComponentProps props = builder.build();
         Element element = new Element(DiagramComponent.class, props);
 
         Diagram newDiagram = new DiagramRenderer(this.logger).render(element);
@@ -140,15 +142,6 @@ public class DiagramCreationService implements IDiagramCreationService {
         }
         RepresentationDescriptor representationDescriptor = this.getRepresentationDescriptor(editingContext.getId(), newDiagram);
         this.representationService.save(representationDescriptor);
-
-        // Reset move / creation tool data
-        if (!movedElementIdToNewPositionMap.isEmpty()) {
-            movedElementIdToNewPositionMap.clear();
-        }
-        if (optionalDiagramContext.isPresent()) {
-            optionalDiagramContext.get().setStartingPosition(null);
-        }
-
         long end = System.currentTimeMillis();
         this.timer.record(end - start, TimeUnit.MILLISECONDS);
         return newDiagram;
@@ -166,49 +159,4 @@ public class DiagramCreationService implements IDiagramCreationService {
         // @formatter:on
     }
 
-    public Set<UUID> getRelatedElementIDs(Set<UUID> baseElements, Diagram diagram) {
-        Set<UUID> res = new HashSet<>();
-        res.addAll(baseElements);
-        Map<UUID, Node> nodesPerIdMap = this.computeNodesPerIdMap(diagram);
-        for (UUID id : baseElements) {
-            Node node = nodesPerIdMap.get(id);
-            if (node != null) {
-                res.addAll(this.getAllChildrenIds(node));
-            }
-        }
-        return res;
-    }
-
-    private Map<UUID, Node> computeNodesPerIdMap(Diagram diagram) {
-        Map<UUID, Node> res = new HashMap<>();
-        for (Node node : diagram.getNodes()) {
-            res.put(node.getId(), node);
-            res.putAll(this.computeNodesPerIdMap(node));
-        }
-        return res;
-    }
-
-    private Map<UUID, Node> computeNodesPerIdMap(Node node) {
-        Map<UUID, Node> res = new HashMap<>();
-        List<Node> subNodes = new ArrayList<>();
-        subNodes.addAll(node.getBorderNodes());
-        subNodes.addAll(node.getChildNodes());
-        for (Node subNode : subNodes) {
-            res.put(subNode.getId(), subNode);
-            res.putAll(this.computeNodesPerIdMap(subNode));
-        }
-        return res;
-    }
-
-    private Set<UUID> getAllChildrenIds(Node node) {
-        Set<UUID> res = new HashSet<>();
-        List<Node> subNodes = new ArrayList<>();
-        subNodes.addAll(node.getBorderNodes());
-        subNodes.addAll(node.getChildNodes());
-        for (Node subNode : subNodes) {
-            res.add(subNode.getId());
-            res.addAll(this.getAllChildrenIds(subNode));
-        }
-        return res;
-    }
 }

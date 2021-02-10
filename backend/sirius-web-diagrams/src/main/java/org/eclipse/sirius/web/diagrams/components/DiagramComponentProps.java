@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 Obeo.
+ * Copyright (c) 2019, 2021 Obeo and others.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -13,14 +13,13 @@
 package org.eclipse.sirius.web.diagrams.components;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
 
+import org.eclipse.sirius.web.annotations.Immutable;
 import org.eclipse.sirius.web.components.IProps;
 import org.eclipse.sirius.web.diagrams.Diagram;
+import org.eclipse.sirius.web.diagrams.MoveEvent;
 import org.eclipse.sirius.web.diagrams.Position;
 import org.eclipse.sirius.web.diagrams.ViewCreationRequest;
 import org.eclipse.sirius.web.diagrams.description.DiagramDescription;
@@ -31,30 +30,22 @@ import org.eclipse.sirius.web.representations.VariableManager;
  *
  * @author sbegaudeau
  */
-public class DiagramComponentProps implements IProps {
-    private final VariableManager variableManager;
+@Immutable
+public final class DiagramComponentProps implements IProps {
+    private VariableManager variableManager;
 
-    private final DiagramDescription diagramDescription;
+    private DiagramDescription diagramDescription;
 
-    private final Optional<Diagram> previousDiagram;
+    private Optional<Diagram> previousDiagram;
 
-    private final List<ViewCreationRequest> viewCreationRequests;
+    private List<ViewCreationRequest> viewCreationRequests;
 
-    private final Map<UUID, Position> movedElementIdToNewPositionMap;
+    private MoveEvent moveEvent;
 
-    private final Set<UUID> allMovedElementIds;
+    private Position startingPosition;
 
-    private final Optional<Position> optionalStartingPosition;
-
-    public DiagramComponentProps(VariableManager variableManager, DiagramDescription diagramDescription, List<ViewCreationRequest> viewCreationRequests, Optional<Diagram> previousDiagram,
-            Map<UUID, Position> movedElementIdToNewPositionMap, Set<UUID> allMovedElementIds, Optional<Position> optionalStartingPosition) {
-        this.variableManager = Objects.requireNonNull(variableManager);
-        this.diagramDescription = Objects.requireNonNull(diagramDescription);
-        this.previousDiagram = Objects.requireNonNull(previousDiagram);
-        this.viewCreationRequests = List.copyOf(Objects.requireNonNull(viewCreationRequests));
-        this.movedElementIdToNewPositionMap = Map.copyOf(Objects.requireNonNull(movedElementIdToNewPositionMap));
-        this.allMovedElementIds = Set.copyOf(Objects.requireNonNull(allMovedElementIds));
-        this.optionalStartingPosition = Objects.requireNonNull(optionalStartingPosition);
+    private DiagramComponentProps() {
+        // Prevent instantiation
     }
 
     public VariableManager getVariableManager() {
@@ -73,15 +64,77 @@ public class DiagramComponentProps implements IProps {
         return this.viewCreationRequests;
     }
 
-    public Map<UUID, Position> getMovedElementIdToNewPositionMap() {
-        return this.movedElementIdToNewPositionMap;
+    public Optional<MoveEvent> getMoveEvent() {
+        return Optional.ofNullable(this.moveEvent);
     }
 
-    public Set<UUID> getAllMovedElementIds() {
-        return this.allMovedElementIds;
+    public Optional<Position> getStartingPosition() {
+        return Optional.ofNullable(this.startingPosition);
     }
 
-    public Optional<Position> getOptionalStartingPosition() {
-        return this.optionalStartingPosition;
+    public static Builder newDiagramComponentProps() {
+        return new Builder();
     }
+
+    /**
+     * The Builder to create a new {@link DiagramComponentProps}.
+     *
+     * @author fbarbin
+     */
+    @SuppressWarnings("checkstyle:HiddenField")
+    public static final class Builder {
+        private VariableManager variableManager;
+
+        private DiagramDescription diagramDescription;
+
+        private Optional<Diagram> previousDiagram;
+
+        private List<ViewCreationRequest> viewCreationRequests;
+
+        private MoveEvent moveEvent;
+
+        private Position startingPosition;
+
+        public Builder variableManager(VariableManager variableManager) {
+            this.variableManager = Objects.requireNonNull(variableManager);
+            return this;
+        }
+
+        public Builder diagramDescription(DiagramDescription diagramDescription) {
+            this.diagramDescription = Objects.requireNonNull(diagramDescription);
+            return this;
+        }
+
+        public Builder previousDiagram(Optional<Diagram> previousDiagram) {
+            this.previousDiagram = Objects.requireNonNull(previousDiagram);
+            return this;
+        }
+
+        public Builder viewCreationRequests(List<ViewCreationRequest> viewCreationRequests) {
+            this.viewCreationRequests = Objects.requireNonNull(viewCreationRequests);
+            return this;
+        }
+
+        public Builder moveEvent(MoveEvent moveEvent) {
+            this.moveEvent = Objects.requireNonNull(moveEvent);
+            return this;
+        }
+
+        public Builder startingPosition(Position startingPosition) {
+            this.startingPosition = Objects.requireNonNull(startingPosition);
+            return this;
+        }
+
+        public DiagramComponentProps build() {
+            DiagramComponentProps diagramComponentProps = new DiagramComponentProps();
+            diagramComponentProps.variableManager = Objects.requireNonNull(this.variableManager);
+            diagramComponentProps.diagramDescription = Objects.requireNonNull(this.diagramDescription);
+            diagramComponentProps.previousDiagram = Objects.requireNonNull(this.previousDiagram);
+            diagramComponentProps.viewCreationRequests = List.copyOf(Objects.requireNonNull(this.viewCreationRequests));
+            diagramComponentProps.moveEvent = this.moveEvent;
+            diagramComponentProps.startingPosition = this.startingPosition;
+            return diagramComponentProps;
+        }
+    }
+
 }
