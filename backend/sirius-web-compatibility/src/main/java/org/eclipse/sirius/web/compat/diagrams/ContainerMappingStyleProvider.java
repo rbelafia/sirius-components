@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 Obeo.
+ * Copyright (c) 2019, 2021 Obeo and others.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -34,6 +34,8 @@ import org.eclipse.sirius.web.representations.VariableManager;
  * @author sbegaudeau
  */
 public class ContainerMappingStyleProvider implements Function<VariableManager, INodeStyle> {
+
+    private static final int SIZE_FACTOR = 10;
 
     private final AQLInterpreter interpreter;
 
@@ -93,11 +95,18 @@ public class ContainerMappingStyleProvider implements Function<VariableManager, 
         Result result = this.interpreter.evaluateExpression(variableManager.getVariables(), flatContainerStyleDescription.getBorderSizeComputationExpression());
         int borderSize = result.asInt().getAsInt();
 
+        result = this.interpreter.evaluateExpression(variableManager.getVariables(), flatContainerStyleDescription.getWidthComputationExpression());
+        int width = result.asInt().getAsInt() * SIZE_FACTOR;
+        result = this.interpreter.evaluateExpression(variableManager.getVariables(), flatContainerStyleDescription.getHeightComputationExpression());
+        int height = result.asInt().getAsInt() * SIZE_FACTOR;
+
         // @formatter:off
         return RectangularNodeStyle.newRectangularNodeStyle()
                 .color(color)
                 .borderColor(borderColor)
                 .borderSize(borderSize)
+                .width(width)
+                .height(height)
                 .borderStyle(borderStyle)
                 .build();
         // @formatter:on

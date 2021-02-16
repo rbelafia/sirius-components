@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 Obeo.
+ * Copyright (c) 2019, 2021 Obeo and others.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -35,6 +35,10 @@ public final class RectangularNodeStyle implements INodeStyle {
 
     private int borderSize;
 
+    private int width;
+
+    private int height;
+
     private LineStyle borderStyle;
 
     private RectangularNodeStyle() {
@@ -57,6 +61,14 @@ public final class RectangularNodeStyle implements INodeStyle {
     @GraphQLField
     public int getBorderSize() {
         return this.borderSize;
+    }
+
+    public int getHeight() {
+        return this.height;
+    }
+
+    public int getWidth() {
+        return this.width;
     }
 
     @GraphQLNonNull
@@ -89,6 +101,10 @@ public final class RectangularNodeStyle implements INodeStyle {
 
         private int borderSize;
 
+        private int width;
+
+        private int height;
+
         private LineStyle borderStyle;
 
         private Builder() {
@@ -115,14 +131,27 @@ public final class RectangularNodeStyle implements INodeStyle {
             return this;
         }
 
+        public Builder width(int width) {
+            this.width = Objects.requireNonNull(width);
+            return this;
+        }
+
+        public Builder height(int height) {
+            this.height = Objects.requireNonNull(height);
+            return this;
+        }
+
         public RectangularNodeStyle build() {
             RectangularNodeStyle nodeStyleDescription = new RectangularNodeStyle();
             nodeStyleDescription.color = Objects.requireNonNull(this.color);
             nodeStyleDescription.borderColor = Objects.requireNonNull(this.borderColor);
             nodeStyleDescription.borderSize = Objects.requireNonNull(this.borderSize);
+            nodeStyleDescription.height = this.height;
+            nodeStyleDescription.width = this.width;
             nodeStyleDescription.borderStyle = Objects.requireNonNull(this.borderStyle);
             return nodeStyleDescription;
         }
+
     }
 
 }

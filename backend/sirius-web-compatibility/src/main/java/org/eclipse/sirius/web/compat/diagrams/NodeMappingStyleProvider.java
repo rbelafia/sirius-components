@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 Obeo.
+ * Copyright (c) 2019, 2021 Obeo and others.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -34,6 +34,8 @@ import org.eclipse.sirius.web.representations.VariableManager;
  * @author sbegaudeau
  */
 public class NodeMappingStyleProvider implements Function<VariableManager, INodeStyle> {
+
+    private static final int SIZE_FACTOR = 10;
 
     private final AQLInterpreter interpreter;
 
@@ -104,6 +106,23 @@ public class NodeMappingStyleProvider implements Function<VariableManager, INode
 
         Result result = this.interpreter.evaluateExpression(variableManager.getVariables(), squareDescription.getBorderSizeComputationExpression());
         int borderSize = result.asInt().getAsInt();
+        Integer width = squareDescription.getWidth() * SIZE_FACTOR;
+        Integer height = squareDescription.getHeight() * SIZE_FACTOR;
+
+        // If the initial width and/or height have not been set by the specifier, we interpret the size computation
+        // expression to set the width and/or height
+        if (width == 0 || height == 0) {
+            result = this.interpreter.evaluateExpression(variableManager.getVariables(), squareDescription.getSizeComputationExpression());
+            int size = result.asInt().getAsInt() * SIZE_FACTOR;
+            if (size > 0) {
+                if (width == 0) {
+                    width = size;
+                }
+                if (height == 0) {
+                    height = size;
+                }
+            }
+        }
 
         // @formatter:off
         return RectangularNodeStyle.newRectangularNodeStyle()
@@ -111,6 +130,8 @@ public class NodeMappingStyleProvider implements Function<VariableManager, INode
                 .borderColor(borderColor)
                 .borderSize(borderSize)
                 .borderStyle(borderStyle)
+                .width(width)
+                .height(height)
                 .build();
         // @formatter:on
     }

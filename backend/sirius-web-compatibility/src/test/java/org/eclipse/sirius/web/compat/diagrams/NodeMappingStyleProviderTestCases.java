@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 Obeo.
+ * Copyright (c) 2019, 2021 Obeo and others.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -23,6 +23,7 @@ import org.eclipse.sirius.diagram.description.ConditionalNodeStyleDescription;
 import org.eclipse.sirius.diagram.description.DescriptionFactory;
 import org.eclipse.sirius.diagram.description.NodeMapping;
 import org.eclipse.sirius.diagram.description.style.NodeStyleDescription;
+import org.eclipse.sirius.diagram.description.style.SquareDescription;
 import org.eclipse.sirius.diagram.description.style.StyleFactory;
 import org.eclipse.sirius.viewpoint.description.FixedColor;
 import org.eclipse.sirius.web.diagrams.INodeStyle;
@@ -74,16 +75,16 @@ public class NodeMappingStyleProviderTestCases {
         return conditionalNodeStyle;
     }
 
-    private NodeStyleDescription createSquareStyle(int red, int green, int blue) {
-        NodeStyleDescription nodeStyleDescription = StyleFactory.eINSTANCE.createSquareDescription();
+    private SquareDescription createSquareStyle(int red, int green, int blue) {
+        SquareDescription squareDescription = StyleFactory.eINSTANCE.createSquareDescription();
 
         FixedColor fixedColor = org.eclipse.sirius.viewpoint.description.DescriptionFactory.eINSTANCE.createFixedColor();
         fixedColor.setRed(red);
         fixedColor.setGreen(green);
         fixedColor.setBlue(blue);
 
-        nodeStyleDescription.setBorderColor(fixedColor);
-        return nodeStyleDescription;
+        squareDescription.setBorderColor(fixedColor);
+        return squareDescription;
     }
 
     @Test
@@ -108,5 +109,30 @@ public class NodeMappingStyleProviderTestCases {
             RectangularNodeStyle rectangularNodeStyle = (RectangularNodeStyle) nodeStyle;
             assertThat(rectangularNodeStyle.getBorderStyle()).isEqualTo(entry.getValue());
         }
+    }
+
+    @Test
+    public void testSizeComputationStyleConversion() {
+        NodeMapping nodeMapping = DescriptionFactory.eINSTANCE.createNodeMapping();
+        SquareDescription style = this.createSquareStyle(0, 0, 0);
+        style.setSizeComputationExpression("3"); //$NON-NLS-1$
+        nodeMapping.setStyle(style);
+
+        VariableManager variableManager = new VariableManager();
+        AQLInterpreter interpreter = new AQLInterpreter(List.of(), List.of(EcorePackage.eINSTANCE));
+        INodeStyle nodeStyle = new NodeMappingStyleProvider(interpreter, nodeMapping).apply(variableManager);
+        assertThat(nodeStyle).isInstanceOf(RectangularNodeStyle.class);
+        RectangularNodeStyle rectangularNodeStyle = (RectangularNodeStyle) nodeStyle;
+        assertThat(rectangularNodeStyle.getWidth()).isEqualTo(30);
+        assertThat(rectangularNodeStyle.getHeight()).isEqualTo(30);
+
+        style.setSizeComputationExpression(null);
+        style.setWidth(2);
+        style.setHeight(3);
+        nodeStyle = new NodeMappingStyleProvider(interpreter, nodeMapping).apply(variableManager);
+        assertThat(nodeStyle).isInstanceOf(RectangularNodeStyle.class);
+        rectangularNodeStyle = (RectangularNodeStyle) nodeStyle;
+        assertThat(rectangularNodeStyle.getWidth()).isEqualTo(20);
+        assertThat(rectangularNodeStyle.getHeight()).isEqualTo(30);
     }
 }
