@@ -20,8 +20,10 @@ import java.util.stream.Collectors;
 import org.eclipse.sirius.web.components.Element;
 import org.eclipse.sirius.web.components.IComponent;
 import org.eclipse.sirius.web.diagrams.Diagram;
+import org.eclipse.sirius.web.diagrams.IDiagramElementEvent;
 import org.eclipse.sirius.web.diagrams.MoveEvent;
 import org.eclipse.sirius.web.diagrams.Position;
+import org.eclipse.sirius.web.diagrams.ResizeEvent;
 import org.eclipse.sirius.web.diagrams.Size;
 import org.eclipse.sirius.web.diagrams.description.DiagramDescription;
 import org.eclipse.sirius.web.diagrams.elements.DiagramElementProps;
@@ -45,8 +47,13 @@ public class DiagramComponent implements IComponent {
     public Element render() {
         VariableManager variableManager = this.props.getVariableManager();
         DiagramDescription diagramDescription = this.props.getDiagramDescription();
-        MoveEvent moveEvent = this.props.getMoveEvent();
-        NodePositionProvider nodePositionProvider = new NodePositionProvider(this.props.getStartingPosition(), moveEvent);
+        IDiagramElementEvent diagramElementEvent = this.props.getDiagramElementEvent();
+        NodePositionProvider nodePositionProvider = new NodePositionProvider(this.props.getStartingPosition(), diagramElementEvent);
+        ResizeEvent resizeEvent = null;
+        if (diagramElementEvent instanceof ResizeEvent) {
+            resizeEvent = (ResizeEvent) diagramElementEvent;
+        }
+        NodeSizeProvider nodeSizeProvider = new NodeSizeProvider(resizeEvent);
         var optionalPreviousDiagram = this.props.getPreviousDiagram();
 
         String label = diagramDescription.getLabelProvider().apply(variableManager);
@@ -76,6 +83,7 @@ public class DiagramComponent implements IComponent {
                             .cache(cache)
                             .viewCreationRequests(this.props.getViewCreationRequests())
                             .nodePositionProvider(nodePositionProvider)
+                            .nodeSizeProvider(nodeSizeProvider)
                             .parentElementId(diagramId)
                             .previousParentElement(optionalPreviousDiagram.map(Object.class::cast))
                             .parentAbsolutePosition(parentAbsolutePosition)
@@ -88,6 +96,10 @@ public class DiagramComponent implements IComponent {
                     var previousEdges = optionalPreviousDiagram.map(previousDiagram -> diagramElementRequestor.getEdges(previousDiagram, edgeDescription))
                             .orElse(List.of());
                     IEdgesRequestor edgesRequestor = new EdgesRequestor(previousEdges);
+                    MoveEvent moveEvent = null;
+                    if (diagramElementEvent instanceof MoveEvent) {
+                        moveEvent = (MoveEvent) diagramElementEvent;
+                    }
                     var edgeComponentProps = new EdgeComponentProps(variableManager, edgeDescription, edgesRequestor, cache, moveEvent);
                     return new Element(EdgeComponent.class, edgeComponentProps);
                 })

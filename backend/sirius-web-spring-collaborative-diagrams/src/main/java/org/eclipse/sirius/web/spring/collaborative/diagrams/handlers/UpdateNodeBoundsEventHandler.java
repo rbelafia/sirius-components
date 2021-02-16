@@ -12,13 +12,11 @@
  *******************************************************************************/
 package org.eclipse.sirius.web.spring.collaborative.diagrams.handlers;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.eclipse.sirius.web.collaborative.api.services.EventHandlerResponse;
 import org.eclipse.sirius.web.collaborative.api.services.Monitoring;
@@ -26,13 +24,14 @@ import org.eclipse.sirius.web.collaborative.diagrams.api.IDiagramContext;
 import org.eclipse.sirius.web.collaborative.diagrams.api.IDiagramEventHandler;
 import org.eclipse.sirius.web.collaborative.diagrams.api.IDiagramInput;
 import org.eclipse.sirius.web.collaborative.diagrams.api.IDiagramService;
-import org.eclipse.sirius.web.collaborative.diagrams.api.dto.UpdateNodePositionInput;
-import org.eclipse.sirius.web.collaborative.diagrams.api.dto.UpdateNodePositionSuccessPayload;
+import org.eclipse.sirius.web.collaborative.diagrams.api.dto.UpdateNodeBoundsInput;
+import org.eclipse.sirius.web.collaborative.diagrams.api.dto.UpdateNodeBoundsSuccessPayload;
 import org.eclipse.sirius.web.core.api.ErrorPayload;
 import org.eclipse.sirius.web.core.api.IEditingContext;
-import org.eclipse.sirius.web.diagrams.MoveEvent;
 import org.eclipse.sirius.web.diagrams.Node;
 import org.eclipse.sirius.web.diagrams.Position;
+import org.eclipse.sirius.web.diagrams.ResizeEvent;
+import org.eclipse.sirius.web.diagrams.Size;
 import org.eclipse.sirius.web.spring.collaborative.diagrams.messages.ICollaborativeDiagramMessageService;
 import org.springframework.stereotype.Service;
 
@@ -40,12 +39,12 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 
 /**
- * Handle "Update Node Position" events.
+ * Handle "Update Node Bounds" events.
  *
  * @author fbarbin
  */
 @Service
-public class UpdateNodePositionEventHandler implements IDiagramEventHandler {
+public class UpdateNodeBoundsEventHandler implements IDiagramEventHandler {
 
     private final ICollaborativeDiagramMessageService messageService;
 
@@ -53,7 +52,7 @@ public class UpdateNodePositionEventHandler implements IDiagramEventHandler {
 
     private final Counter counter;
 
-    public UpdateNodePositionEventHandler(ICollaborativeDiagramMessageService messageService, IDiagramService diagramService, MeterRegistry meterRegistry) {
+    public UpdateNodeBoundsEventHandler(ICollaborativeDiagramMessageService messageService, IDiagramService diagramService, MeterRegistry meterRegistry) {
         this.diagramService = Objects.requireNonNull(diagramService);
         this.messageService = Objects.requireNonNull(messageService);
 
@@ -66,7 +65,7 @@ public class UpdateNodePositionEventHandler implements IDiagramEventHandler {
 
     @Override
     public boolean canHandle(IDiagramInput diagramInput) {
-        return diagramInput instanceof UpdateNodePositionInput;
+        return diagramInput instanceof UpdateNodeBoundsInput;
     }
 
     @Override
@@ -74,20 +73,25 @@ public class UpdateNodePositionEventHandler implements IDiagramEventHandler {
         this.counter.increment();
 
         EventHandlerResponse result;
-        if (diagramInput instanceof UpdateNodePositionInput) {
-            result = this.handleUpdateNodePosition(editingContext, diagramContext, (UpdateNodePositionInput) diagramInput);
+        if (diagramInput instanceof UpdateNodeBoundsInput) {
+            result = this.handleUpdateNodeBounds(editingContext, diagramContext, (UpdateNodeBoundsInput) diagramInput);
         } else {
-            String message = this.messageService.invalidInput(diagramInput.getClass().getSimpleName(), UpdateNodePositionEventHandler.class.getSimpleName());
+            String message = this.messageService.invalidInput(diagramInput.getClass().getSimpleName(), UpdateNodeBoundsEventHandler.class.getSimpleName());
             result = new EventHandlerResponse(false, representation -> false, new ErrorPayload(message));
         }
         return result;
     }
 
-    private EventHandlerResponse handleUpdateNodePosition(IEditingContext editingContext, IDiagramContext diagramContext, UpdateNodePositionInput diagramInput) {
+    private EventHandlerResponse handleUpdateNodeBounds(IEditingContext editingContext, IDiagramContext diagramContext, UpdateNodeBoundsInput diagramInput) {
         // @formatter:off
         Position newPosition = Position.newPosition()
                 .x(diagramInput.getNewPositionX())
                 .y(diagramInput.getNewPositionY())
+                .build();
+
+        Size newSize = Size.newSize()
+                .width(diagramInput.getNewWidth())
+                .height(diagramInput.getNewHeight())
                 .build();
         // @formatter:on
 
@@ -95,9 +99,20 @@ public class UpdateNodePositionEventHandler implements IDiagramEventHandler {
 
         EventHandlerResponse result;
         if (optionalNode.isPresent()) {
-            Set<UUID> childrenIds = this.getAllChildrenIds(optionalNode.get());
-            diagramContext.setDiagramElementEvent(new MoveEvent(diagramInput.getDiagramElementId(), newPosition, childrenIds));
-            result = new EventHandlerResponse(true, representation -> true, new UpdateNodePositionSuccessPayload(diagramContext.getDiagram()));
+            Position oldPosition = optionalNode.get().getPosition();
+            //@formatter:off
+            Set<UUID> childrenIds = optionalNode.get()
+                    .getChildNodes()
+                    .stream()
+                    .map(Node::getId)
+                    .collect(Collectors.toSet());
+            Position delta = Position.newPosition()
+                    .x(oldPosition.getX() - newPosition.getX())
+                    .y(oldPosition.getY() - newPosition.getY())
+                    .build();
+            //@formatter:on
+            diagramContext.setDiagramElementEvent(new ResizeEvent(diagramInput.getDiagramElementId(), delta, newSize, childrenIds));
+            result = new EventHandlerResponse(true, representation -> true, new UpdateNodeBoundsSuccessPayload(diagramContext.getDiagram()));
         } else {
             String message = this.messageService.nodeNotFound(String.valueOf(diagramInput.getDiagramElementId()));
             result = new EventHandlerResponse(true, representation -> true, new ErrorPayload(message));
@@ -105,15 +120,4 @@ public class UpdateNodePositionEventHandler implements IDiagramEventHandler {
         return result;
     }
 
-    private Set<UUID> getAllChildrenIds(Node node) {
-        Set<UUID> res = new HashSet<>();
-        List<Node> subNodes = new ArrayList<>();
-        subNodes.addAll(node.getBorderNodes());
-        subNodes.addAll(node.getChildNodes());
-        for (Node subNode : subNodes) {
-            res.add(subNode.getId());
-            res.addAll(this.getAllChildrenIds(subNode));
-        }
-        return res;
-    }
 }

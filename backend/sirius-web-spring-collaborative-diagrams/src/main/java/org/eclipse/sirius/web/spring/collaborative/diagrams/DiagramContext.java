@@ -18,7 +18,7 @@ import java.util.Objects;
 
 import org.eclipse.sirius.web.collaborative.diagrams.api.IDiagramContext;
 import org.eclipse.sirius.web.diagrams.Diagram;
-import org.eclipse.sirius.web.diagrams.MoveEvent;
+import org.eclipse.sirius.web.diagrams.IDiagramElementEvent;
 import org.eclipse.sirius.web.diagrams.Position;
 import org.eclipse.sirius.web.diagrams.ViewCreationRequest;
 
@@ -33,7 +33,7 @@ public class DiagramContext implements IDiagramContext {
 
     private final List<ViewCreationRequest> viewCreationRequests;
 
-    private MoveEvent moveEvent;
+    private IDiagramElementEvent diagramElementEvent;
 
     private Position startingPosition;
 
@@ -58,13 +58,13 @@ public class DiagramContext implements IDiagramContext {
     }
 
     @Override
-    public MoveEvent getMoveEvent() {
-        return this.moveEvent;
+    public IDiagramElementEvent getDiagramElementEvent() {
+        return this.diagramElementEvent;
     }
 
     @Override
-    public void setMoveEvent(MoveEvent moveEvent) {
-        this.moveEvent = moveEvent;
+    public void setDiagramElementEvent(IDiagramElementEvent diagramElementEvent) {
+        this.diagramElementEvent = diagramElementEvent;
     }
 
     @Override
@@ -79,7 +79,7 @@ public class DiagramContext implements IDiagramContext {
 
     @Override
     public void reset() {
-        this.moveEvent = null;
+        this.diagramElementEvent = null;
         this.startingPosition = null;
     }
 }

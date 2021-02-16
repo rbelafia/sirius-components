@@ -146,7 +146,7 @@ public class EdgeComponent implements IComponent {
     }
 
     private boolean hasMoved(UUID sourceId, UUID targetId, MoveEvent moveEvent) {
-        return sourceId.equals(moveEvent.getNodeId()) || targetId.equals(moveEvent.getNodeId()) || moveEvent.getAllChildrenIds().contains(sourceId) || moveEvent.getAllChildrenIds().contains(targetId);
+        return sourceId.equals(moveEvent.getNodeId()) || targetId.equals(moveEvent.getNodeId()) || moveEvent.getMovedChildrenIds().contains(sourceId) || moveEvent.getMovedChildrenIds().contains(targetId);
     }
 
     private List<Element> getLabelsChildren(EdgeDescription edgeDescription, VariableManager edgeVariableManager, Optional<Edge> optionalPreviousEdge, UUID edgeId, List<Position> routingPoints) {

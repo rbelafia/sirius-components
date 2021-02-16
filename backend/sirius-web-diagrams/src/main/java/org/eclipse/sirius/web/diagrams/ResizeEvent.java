@@ -16,22 +16,25 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Represent an immutable move event.
+ * Represent an immutable resize event.
  *
- * @author wpiers
+ * @author fbarbin
  */
-public class MoveEvent implements IDiagramElementEvent {
+public class ResizeEvent implements IDiagramElementEvent {
 
     private UUID nodeId;
 
-    private Position newPosition;
+    private Position positionDelta;
 
-    private Set<UUID> allChildrenIds;
+    private Size newSize;
 
-    public MoveEvent(UUID nodeId, Position newPosition, Set<UUID> allChildrenIds) {
+    private Set<UUID> impactedChildren;
+
+    public ResizeEvent(UUID nodeId, Position positionDelta, Size newSize, Set<UUID> impactedChildren) {
         this.nodeId = nodeId;
-        this.newPosition = newPosition;
-        this.allChildrenIds = allChildrenIds;
+        this.positionDelta = positionDelta;
+        this.newSize = newSize;
+        this.impactedChildren = impactedChildren;
     }
 
     @Override
@@ -39,12 +42,15 @@ public class MoveEvent implements IDiagramElementEvent {
         return this.nodeId;
     }
 
-    public Position getNewPosition() {
-        return this.newPosition;
+    public Position getPositionDelta() {
+        return this.positionDelta;
     }
 
-    public Set<UUID> getMovedChildrenIds() {
-        return this.allChildrenIds;
+    public Size getNewSize() {
+        return this.newSize;
     }
 
+    public Set<UUID> getImpactedChildren() {
+        return this.impactedChildren;
+    }
 }

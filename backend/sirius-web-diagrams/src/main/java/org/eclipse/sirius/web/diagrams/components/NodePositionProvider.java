@@ -19,10 +19,12 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.eclipse.sirius.web.diagrams.Diagram;
+import org.eclipse.sirius.web.diagrams.IDiagramElementEvent;
 import org.eclipse.sirius.web.diagrams.INodeStyle;
 import org.eclipse.sirius.web.diagrams.MoveEvent;
 import org.eclipse.sirius.web.diagrams.Node;
 import org.eclipse.sirius.web.diagrams.Position;
+import org.eclipse.sirius.web.diagrams.ResizeEvent;
 import org.eclipse.sirius.web.diagrams.Size;
 
 /**
@@ -40,19 +42,19 @@ public class NodePositionProvider {
 
     private Size lastSize;
 
-    private MoveEvent moveEvent;
+    private IDiagramElementEvent diagramElementEvent;
 
     /**
      * Default constructor.
      *
      * @param startingPosition
-     *            the coordinates of the new element starting position. can be null.
-     * @param moveEvent
-     *            a pair of the new position of diagram element (identified by its UUID). can be null.
+     *            the coordinates of the new element starting position. Can be null.
+     * @param diagramElementEvent
+     *            the event that occurs on a particular diagram element. Can be null.
      */
-    public NodePositionProvider(Position startingPosition, MoveEvent moveEvent) {
+    public NodePositionProvider(Position startingPosition, IDiagramElementEvent diagramElementEvent) {
         this.startingPosition = startingPosition;
-        this.moveEvent = moveEvent;
+        this.diagramElementEvent = diagramElementEvent;
     }
 
     /**
@@ -81,16 +83,15 @@ public class NodePositionProvider {
      */
     public Position getPosition(UUID nodeId, Optional<Node> optionalPreviousNode, Optional<Object> optionalPreviousParentElement, NodeSizeProvider nodeSizeProvider, INodeStyle style,
             Position parentAbsolutePosition) {
-        Position position;
-        if (this.moveEvent != null && this.moveEvent.getNodeId().equals(nodeId)) {
-            // The node has been moved
-            position = this.moveEvent.getNewPosition();
+        Position position = this.getPositionFromEvent(optionalPreviousNode);
+        if (position != null) {
+            // we return this position.
         } else if (optionalPreviousNode.isPresent()) {
             // The node already has a valid position
             position = optionalPreviousNode.get().getPosition();
         } else if (this.startingPosition != null && this.lastPosition == null) {
             // The node has been created by a tool and has a fixed position
-            Size newSize = nodeSizeProvider.getSize(style, List.of());
+            Size newSize = nodeSizeProvider.getSize(nodeId, Optional.empty(), style, List.of());
             // we shift the position according to the node size, so the center of the node matches the mouse position
             double xPosition = this.startingPosition.getX() - newSize.getWidth() / 2;
             double yPosition = this.startingPosition.getY() - newSize.getHeight() / 2;
@@ -104,8 +105,45 @@ public class NodePositionProvider {
             // @formatter:on
         } else {
             // The node has been created along with others, by a tool or a refresh
-            Size newSize = nodeSizeProvider.getSize(style, List.of());
+            Size newSize = nodeSizeProvider.getSize(nodeId, Optional.empty(), style, List.of());
             position = this.getNextPosition(optionalPreviousParentElement, newSize);
+        }
+        return position;
+    }
+
+    private Position getPositionFromEvent(Optional<Node> optionalPreviousNode) {
+        Position position = null;
+        if (optionalPreviousNode.isPresent() && this.diagramElementEvent != null) {
+            Node node = optionalPreviousNode.get();
+            if (this.diagramElementEvent instanceof MoveEvent && this.diagramElementEvent.getNodeId().equals(node.getId())) {
+                position = ((MoveEvent) this.diagramElementEvent).getNewPosition();
+            } else if (this.diagramElementEvent instanceof ResizeEvent) {
+                ResizeEvent resizeEvent = (ResizeEvent) this.diagramElementEvent;
+                if (this.diagramElementEvent.getNodeId().equals(node.getId())) {
+                    Position oldPosition = node.getPosition();
+                    double newX = oldPosition.getX() - resizeEvent.getPositionDelta().getX();
+                    double newY = oldPosition.getY() - resizeEvent.getPositionDelta().getY();
+                    // @formatter:off
+                    position = Position.newPosition()
+                            .x(newX)
+                            .y(newY)
+                            .build();
+                    // @formatter:on
+                } else if (this.diagramElementEvent instanceof ResizeEvent && ((ResizeEvent) this.diagramElementEvent).getImpactedChildren().contains(node.getId())) {
+                    // The parent has been resized so the relative new position may have to be changed to keep the same
+                    // absolute coordinates
+                    Position oldPosition = node.getPosition();
+                    double newX = oldPosition.getX() + resizeEvent.getPositionDelta().getX();
+                    double newY = oldPosition.getY() + resizeEvent.getPositionDelta().getY();
+                    // @formatter:off
+                    position = Position.newPosition()
+                            .x(newX)
+                            .y(newY)
+                            .build();
+                    // @formatter:on
+                }
+            }
+
         }
         return position;
     }

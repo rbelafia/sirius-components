@@ -107,7 +107,7 @@ public class NodeComponent implements IComponent {
         NodeContainmentKind containmentKind = this.props.getContainmentKind();
         DiagramRenderingCache cache = this.props.getCache();
         NodePositionProvider nodePositionProvider = this.props.getNodePositionProvider();
-        NodeSizeProvider nodeSizeProvider = new NodeSizeProvider();
+        NodeSizeProvider nodeSizeProvider = this.props.getNodeSizeProvider();
 
         UUID nodeId = optionalPreviousNode.map(Node::getId).orElseGet(() -> this.computeNodeId(targetObjectId));
         Optional<Label> optionalPreviousLabel = optionalPreviousNode.map(Node::getLabel);
@@ -135,6 +135,7 @@ public class NodeComponent implements IComponent {
                             .viewCreationRequests(this.props.getViewCreationRequests())
                             .parentElementId(nodeId)
                             .nodePositionProvider(nodePositionProvider)
+                            .nodeSizeProvider(nodeSizeProvider)
                             .previousParentElement(optionalPreviousNode.map(Object.class::cast))
                             .parentAbsolutePosition(absolutePosition)
                             .build();
@@ -157,6 +158,7 @@ public class NodeComponent implements IComponent {
                     .viewCreationRequests(this.props.getViewCreationRequests())
                     .parentElementId(nodeId)
                     .nodePositionProvider(nodePositionProvider)
+                    .nodeSizeProvider(nodeSizeProvider)
                     .previousParentElement(optionalPreviousNode.map(Object.class::cast))
                     .parentAbsolutePosition(absolutePosition)
                     .build();
@@ -165,7 +167,7 @@ public class NodeComponent implements IComponent {
                 .collect(Collectors.toList());
         //@formatter:on
 
-        Size size = optionalPreviousNode.map(Node::getSize).orElseGet(() -> nodeSizeProvider.getSize(style, childNodes));
+        Size size = nodeSizeProvider.getSize(nodeId, optionalPreviousNode, style, childNodes);
         NodeLabelPositionProvider labelBoundsProvider = new NodeLabelPositionProvider(type, size);
         LabelDescription labelDescription = nodeDescription.getLabelDescription();
         nodeVariableManager.put(LabelDescription.OWNER_ID, nodeId);

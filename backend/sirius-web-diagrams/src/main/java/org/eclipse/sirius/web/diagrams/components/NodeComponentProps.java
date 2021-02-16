@@ -49,6 +49,8 @@ public final class NodeComponentProps implements IProps {
 
     private NodePositionProvider nodePositionProvider;
 
+    private NodeSizeProvider nodeSizeProvider;
+
     private Optional<Object> previousParentElement;
 
     private Position parentAbsolutePosition;
@@ -89,6 +91,10 @@ public final class NodeComponentProps implements IProps {
         return this.nodePositionProvider;
     }
 
+    public NodeSizeProvider getNodeSizeProvider() {
+        return this.nodeSizeProvider;
+    }
+
     public Optional<Object> getPreviousParentElement() {
         return this.previousParentElement;
     }
@@ -123,6 +129,8 @@ public final class NodeComponentProps implements IProps {
         private UUID parentElementId;
 
         private NodePositionProvider nodePositionProvider;
+
+        private NodeSizeProvider nodeSizeProvider;
 
         private Optional<Object> previousParentElement;
 
@@ -168,6 +176,11 @@ public final class NodeComponentProps implements IProps {
             return this;
         }
 
+        public Builder nodeSizeProvider(NodeSizeProvider nodeSizeProvider) {
+            this.nodeSizeProvider = Objects.requireNonNull(nodeSizeProvider);
+            return this;
+        }
+
         public Builder previousParentElement(Optional<Object> previousParentElement) {
             this.previousParentElement = Objects.requireNonNull(previousParentElement);
             return this;
@@ -188,6 +201,7 @@ public final class NodeComponentProps implements IProps {
             nodeComponentProps.viewCreationRequests = Objects.requireNonNull(this.viewCreationRequests);
             nodeComponentProps.parentElementId = Objects.requireNonNull(this.parentElementId);
             nodeComponentProps.nodePositionProvider = Objects.requireNonNull(this.nodePositionProvider);
+            nodeComponentProps.nodeSizeProvider = Objects.requireNonNull(this.nodeSizeProvider);
             nodeComponentProps.previousParentElement = Objects.requireNonNull(this.previousParentElement);
             nodeComponentProps.parentAbsolutePosition = Objects.requireNonNull(this.parentAbsolutePosition);
             return nodeComponentProps;

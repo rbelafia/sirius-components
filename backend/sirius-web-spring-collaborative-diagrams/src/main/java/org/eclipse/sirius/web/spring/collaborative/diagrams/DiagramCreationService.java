@@ -25,7 +25,7 @@ import org.eclipse.sirius.web.components.Element;
 import org.eclipse.sirius.web.core.api.IEditingContext;
 import org.eclipse.sirius.web.core.api.IObjectService;
 import org.eclipse.sirius.web.diagrams.Diagram;
-import org.eclipse.sirius.web.diagrams.MoveEvent;
+import org.eclipse.sirius.web.diagrams.IDiagramElementEvent;
 import org.eclipse.sirius.web.diagrams.Position;
 import org.eclipse.sirius.web.diagrams.ViewCreationRequest;
 import org.eclipse.sirius.web.diagrams.components.DiagramComponent;
@@ -116,7 +116,7 @@ public class DiagramCreationService implements IDiagramCreationService {
         variableManager.put(VariableManager.SELF, targetObject);
         variableManager.put(IEditingContext.EDITING_CONTEXT, editingContext);
 
-        Optional<MoveEvent> optionalMoveEvent = optionalDiagramContext.map(IDiagramContext::getMoveEvent);
+        Optional<IDiagramElementEvent> optionalDiagramElementEvent = optionalDiagramContext.map(IDiagramContext::getDiagramElementEvent);
         Optional<Diagram> optionalPreviousDiagram = optionalDiagramContext.map(IDiagramContext::getDiagram);
         Optional<Position> optionalStartingPosition = optionalDiagramContext.map(IDiagramContext::getStartingPosition);
         List<ViewCreationRequest> viewCreationRequests = optionalDiagramContext.map(IDiagramContext::getViewCreationRequests).orElse(List.of());
@@ -127,8 +127,8 @@ public class DiagramCreationService implements IDiagramCreationService {
                 .viewCreationRequests(viewCreationRequests)
                 .previousDiagram(optionalPreviousDiagram);
         //@formatter:on
-        if (optionalMoveEvent.isPresent()) {
-            builder.moveEvent(optionalMoveEvent.get());
+        if (optionalDiagramElementEvent.isPresent()) {
+            builder.diagramElementEvent(optionalDiagramElementEvent.get());
         }
         if (optionalStartingPosition.isPresent()) {
             builder.startingPosition(optionalStartingPosition.get());

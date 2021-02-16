@@ -19,7 +19,7 @@ import java.util.Optional;
 import org.eclipse.sirius.web.annotations.Immutable;
 import org.eclipse.sirius.web.components.IProps;
 import org.eclipse.sirius.web.diagrams.Diagram;
-import org.eclipse.sirius.web.diagrams.MoveEvent;
+import org.eclipse.sirius.web.diagrams.IDiagramElementEvent;
 import org.eclipse.sirius.web.diagrams.Position;
 import org.eclipse.sirius.web.diagrams.ViewCreationRequest;
 import org.eclipse.sirius.web.diagrams.description.DiagramDescription;
@@ -40,7 +40,7 @@ public final class DiagramComponentProps implements IProps {
 
     private List<ViewCreationRequest> viewCreationRequests;
 
-    private MoveEvent moveEvent;
+    private IDiagramElementEvent diagramElementEvent;
 
     private Position startingPosition;
 
@@ -64,8 +64,8 @@ public final class DiagramComponentProps implements IProps {
         return this.viewCreationRequests;
     }
 
-    public MoveEvent getMoveEvent() {
-        return this.moveEvent;
+    public IDiagramElementEvent getDiagramElementEvent() {
+        return this.diagramElementEvent;
     }
 
     public Position getStartingPosition() {
@@ -91,7 +91,7 @@ public final class DiagramComponentProps implements IProps {
 
         private List<ViewCreationRequest> viewCreationRequests;
 
-        private MoveEvent moveEvent;
+        private IDiagramElementEvent diagramElementEvent;
 
         private Position startingPosition;
 
@@ -115,8 +115,8 @@ public final class DiagramComponentProps implements IProps {
             return this;
         }
 
-        public Builder moveEvent(MoveEvent moveEvent) {
-            this.moveEvent = Objects.requireNonNull(moveEvent);
+        public Builder diagramElementEvent(IDiagramElementEvent diagramElementEvent) {
+            this.diagramElementEvent = Objects.requireNonNull(diagramElementEvent);
             return this;
         }
 
@@ -131,7 +131,7 @@ public final class DiagramComponentProps implements IProps {
             diagramComponentProps.diagramDescription = Objects.requireNonNull(this.diagramDescription);
             diagramComponentProps.previousDiagram = Objects.requireNonNull(this.previousDiagram);
             diagramComponentProps.viewCreationRequests = List.copyOf(Objects.requireNonNull(this.viewCreationRequests));
-            diagramComponentProps.moveEvent = this.moveEvent;
+            diagramComponentProps.diagramElementEvent = this.diagramElementEvent;
             diagramComponentProps.startingPosition = this.startingPosition;
             return diagramComponentProps;
         }

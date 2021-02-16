@@ -50,7 +50,7 @@ public class NodePositionProviderTestCases {
     public void testNewNodesInClosedDiagram() {
         List<Node> nodes = new ArrayList<>();
         Diagram parent;
-        NodeSizeProvider nodeSizeProvider = new NodeSizeProvider();
+        NodeSizeProvider nodeSizeProvider = new NodeSizeProvider(null);
         INodeStyle style = this.getRectangularNodeStyle();
 
         parent = this.getDiagram(nodes);
@@ -72,7 +72,7 @@ public class NodePositionProviderTestCases {
     public void testNewNodesInOpenedDiagram() {
         List<Node> nodes = new ArrayList<>();
         Diagram parent;
-        NodeSizeProvider nodeSizeProvider = new NodeSizeProvider();
+        NodeSizeProvider nodeSizeProvider = new NodeSizeProvider(null);
         INodeStyle style = this.getRectangularNodeStyle();
 
         parent = this.getDiagram(nodes);
@@ -93,7 +93,7 @@ public class NodePositionProviderTestCases {
         parent = this.getDiagram(nodes);
         nodePositionProvider = new NodePositionProvider(startingPosition, null);
         nextPosition = nodePositionProvider.getPosition(UUID.randomUUID(), Optional.empty(), Optional.of(parent), nodeSizeProvider, style, ZERO_POSITION);
-        Size size = nodeSizeProvider.getSize(style, List.of());
+        Size size = nodeSizeProvider.getSize(null, Optional.empty(), style, List.of());
         assertThat(nextPosition).extracting(Position::getX).isEqualTo(STARTX - size.getWidth() / 2);
         assertThat(nextPosition).extracting(Position::getY).isEqualTo(STARTY - size.getHeight() / 2);
     }
@@ -103,7 +103,7 @@ public class NodePositionProviderTestCases {
         Position parentPosition = Position.newPosition().x(0).y(0).build();
         List<Node> nodes = new ArrayList<>();
         Node parent;
-        NodeSizeProvider nodeSizeProvider = new NodeSizeProvider();
+        NodeSizeProvider nodeSizeProvider = new NodeSizeProvider(null);
         INodeStyle style = this.getRectangularNodeStyle();
 
         parent = this.getNode(parentPosition, nodes);
@@ -126,7 +126,7 @@ public class NodePositionProviderTestCases {
         Position parentPosition = Position.newPosition().x(0).y(0).build();
         List<Node> nodes = new ArrayList<>();
         Node parent;
-        NodeSizeProvider nodeSizeProvider = new NodeSizeProvider();
+        NodeSizeProvider nodeSizeProvider = new NodeSizeProvider(null);
         INodeStyle style = this.getRectangularNodeStyle();
 
         parent = this.getNode(parentPosition, nodes);
@@ -147,7 +147,7 @@ public class NodePositionProviderTestCases {
         parent = this.getNode(parentPosition, nodes);
         nodePositionProvider = new NodePositionProvider(startingPosition, null);
         nextPosition = nodePositionProvider.getPosition(UUID.randomUUID(), Optional.empty(), Optional.of(parent), nodeSizeProvider, style, ZERO_POSITION);
-        Size size = nodeSizeProvider.getSize(style, List.of());
+        Size size = nodeSizeProvider.getSize(null, Optional.empty(), style, List.of());
         assertThat(nextPosition).extracting(Position::getX).isEqualTo(STARTX - size.getWidth() / 2);
         assertThat(nextPosition).extracting(Position::getY).isEqualTo(STARTY - size.getHeight() / 2);
     }
