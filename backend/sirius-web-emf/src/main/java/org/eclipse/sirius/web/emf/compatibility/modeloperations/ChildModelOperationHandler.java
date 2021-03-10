@@ -18,7 +18,8 @@ import java.util.Optional;
 
 import org.eclipse.sirius.viewpoint.description.tool.ModelOperation;
 import org.eclipse.sirius.web.compat.api.IModelOperationHandler;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.Status;
 
 /**
@@ -27,10 +28,10 @@ import org.eclipse.sirius.web.representations.Status;
  * @author sbegaudeau
  */
 public class ChildModelOperationHandler {
-    public Status handle(AQLInterpreter interpreter, Map<String, Object> variables, List<ModelOperation> modelOperations) {
+    public Status handle(AQLInterpreterAPI interpreter, Map<String, Object> variables, List<ModelOperation> modelOperations, AQLEntry entry) {
         boolean hasBeenSuccessfullyExecuted = true;
 
-        ModelOperationHandlerSwitch modelOperationHandlerSwitch = new ModelOperationHandlerSwitch(interpreter);
+        ModelOperationHandlerSwitch modelOperationHandlerSwitch = new ModelOperationHandlerSwitch(interpreter, entry);
         for (ModelOperation modelOperation : modelOperations) {
             Optional<IModelOperationHandler> optionalModelOperationHandler = modelOperationHandlerSwitch.apply(modelOperation);
 

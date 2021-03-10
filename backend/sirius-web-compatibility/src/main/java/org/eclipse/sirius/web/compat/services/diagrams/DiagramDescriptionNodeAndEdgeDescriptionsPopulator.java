@@ -19,6 +19,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.antlr.v4.runtime.misc.Pair;
 import org.eclipse.sirius.diagram.business.internal.metamodel.helper.LayerHelper;
 import org.eclipse.sirius.diagram.description.AdditionalLayer;
 import org.eclipse.sirius.diagram.description.ContainerMappingImport;
@@ -34,7 +35,8 @@ import org.eclipse.sirius.web.core.api.IObjectService;
 import org.eclipse.sirius.web.diagrams.description.DiagramDescription.Builder;
 import org.eclipse.sirius.web.diagrams.description.EdgeDescription;
 import org.eclipse.sirius.web.diagrams.description.NodeDescription;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.services.api.objects.IEditService;
 import org.springframework.stereotype.Service;
 
@@ -70,11 +72,11 @@ public class DiagramDescriptionNodeAndEdgeDescriptionsPopulator implements IDiag
     }
 
     @Override
-    public Builder populate(Builder builder, DiagramDescription siriusDiagramDescription, AQLInterpreter interpreter) {
+    public Builder populate(Builder builder, DiagramDescription siriusDiagramDescription, AQLInterpreterAPI interpreter, AQLEntry entry) {
         Map<UUID, NodeDescription> id2NodeDescriptions = new HashMap<>();
 
         // @formatter:off
-        ContainerMappingConverter containerMappingConverter = new ContainerMappingConverter(this.objectService, this.editService, interpreter, this.identifierProvider, this.semanticCandidatesProviderFactory, this.modelOperationHandlerSwitchProvider);
+        ContainerMappingConverter containerMappingConverter = new ContainerMappingConverter(this.objectService, this.editService, interpreter, this.identifierProvider, this.semanticCandidatesProviderFactory, this.modelOperationHandlerSwitchProvider, entry);
         List<Layer> layers = LayerHelper.getAllLayers(siriusDiagramDescription).stream()
                 .filter(this::isEnabledByDefault)
                 .collect(Collectors.toList());
@@ -86,7 +88,7 @@ public class DiagramDescriptionNodeAndEdgeDescriptionsPopulator implements IDiag
         // @formatter:on
 
         // @formatter:off
-        NodeMappingConverter nodeMappingConverter = new NodeMappingConverter(this.objectService, this.editService, interpreter, this.identifierProvider, this.semanticCandidatesProviderFactory, this.modelOperationHandlerSwitchProvider);
+        NodeMappingConverter nodeMappingConverter = new NodeMappingConverter(this.objectService, this.editService, interpreter, this.identifierProvider, this.semanticCandidatesProviderFactory, this.modelOperationHandlerSwitchProvider, entry);
         List<NodeDescription> nodeDescriptions = layers.stream()
                 .flatMap(layer -> layer.getNodeMappings().stream())
                 .map(nodeMapping -> nodeMappingConverter.convert(nodeMapping, id2NodeDescriptions))
@@ -95,7 +97,7 @@ public class DiagramDescriptionNodeAndEdgeDescriptionsPopulator implements IDiag
         nodeDescriptions.addAll(containerDescriptions);
 
         // @formatter:off
-        EdgeMappingConverter edgeMappingConverter = new EdgeMappingConverter(this.objectService, this.editService, interpreter, this.identifierProvider, this.semanticCandidatesProviderFactory, this.modelOperationHandlerSwitchProvider, id2NodeDescriptions);
+        EdgeMappingConverter edgeMappingConverter = new EdgeMappingConverter(this.objectService, this.editService, new Pair<>(interpreter, entry), this.identifierProvider, this.semanticCandidatesProviderFactory, this.modelOperationHandlerSwitchProvider, id2NodeDescriptions);
         List<EdgeDescription> edgeDescriptions = layers.stream()
                 .flatMap(layer -> layer.getEdgeMappings().stream())
                 .map(edgeMappingConverter::convert)

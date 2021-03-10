@@ -13,6 +13,7 @@
 package org.eclipse.sirius.web.interpreter;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.*;
 
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,7 @@ import java.util.Optional;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.EcorePackage;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -31,19 +33,27 @@ import org.junit.Test;
 public class AQLInterpreterTestCases {
 
     private static final String SELF = "self"; //$NON-NLS-1$
+    AQLInterpreter interpreter;
+    AQLInterpreterAPI aqlInterpreterAPI;
+
+    @Before
+    public void setUp() {
+        interpreter = new AQLInterpreter();
+        aqlInterpreterAPI = new AQLInterpreterAPI(interpreter);
+    }
 
     @Test
     public void testNameFeatureExpression() {
-        AQLInterpreter interpreter = new AQLInterpreter(List.of(), List.of(EcorePackage.eINSTANCE));
-        Result result = interpreter.evaluateExpression(Map.of(SELF, EcorePackage.eINSTANCE.getEModelElement()), "feature:name"); //$NON-NLS-1$
+        AQLEntry entry = aqlInterpreterAPI.initializeUser(List.of(), List.of(EcorePackage.eINSTANCE));
+        Result result = aqlInterpreterAPI.evaluateExpression(Map.of(SELF, EcorePackage.eINSTANCE.getEModelElement()), "feature:name", entry); //$NON-NLS-1$
         Optional<String> asString = result.asString();
         assertThat(asString).isPresent().hasValue(EcorePackage.eINSTANCE.getEModelElement().getName());
     }
 
     @Test
     public void testEContentsFeatureExpression() {
-        AQLInterpreter interpreter = new AQLInterpreter(List.of(), List.of(EcorePackage.eINSTANCE));
-        Result result = interpreter.evaluateExpression(Map.of(SELF, EcorePackage.eINSTANCE.getEModelElement()), "feature:eContents"); //$NON-NLS-1$
+        AQLEntry entry = aqlInterpreterAPI.initializeUser(List.of(), List.of(EcorePackage.eINSTANCE));
+        Result result = aqlInterpreterAPI.evaluateExpression(Map.of(SELF, EcorePackage.eINSTANCE.getEModelElement()), "feature:eContents", entry); //$NON-NLS-1$
         Optional<List<Object>> asObjects = result.asObjects();
         assertThat(asObjects).isPresent();
         assertThat(asObjects.get()).contains(EcorePackage.Literals.EMODEL_ELEMENT__EANNOTATIONS, EcorePackage.Literals.EMODEL_ELEMENT___GET_EANNOTATION__STRING);
@@ -51,8 +61,8 @@ public class AQLInterpreterTestCases {
 
     @Test
     public void testEAllContentsFeatureExpression() {
-        AQLInterpreter interpreter = new AQLInterpreter(List.of(), List.of(EcorePackage.eINSTANCE));
-        Result result = interpreter.evaluateExpression(Map.of(SELF, EcorePackage.eINSTANCE.getEModelElement()), "feature:eAllContents"); //$NON-NLS-1$
+        AQLEntry entry = aqlInterpreterAPI.initializeUser(List.of(), List.of(EcorePackage.eINSTANCE));
+        Result result = aqlInterpreterAPI.evaluateExpression(Map.of(SELF, EcorePackage.eINSTANCE.getEModelElement()), "feature:eAllContents", entry); //$NON-NLS-1$
         Optional<List<Object>> asObjects = result.asObjects();
         assertThat(asObjects).isPresent();
         assertThat(asObjects.get()).contains(EcorePackage.Literals.EMODEL_ELEMENT__EANNOTATIONS, EcorePackage.Literals.EMODEL_ELEMENT___GET_EANNOTATION__STRING);
@@ -60,8 +70,8 @@ public class AQLInterpreterTestCases {
 
     @Test
     public void testEContainerFeatureExpression() {
-        AQLInterpreter interpreter = new AQLInterpreter(List.of(), List.of(EcorePackage.eINSTANCE));
-        Result result = interpreter.evaluateExpression(Map.of(SELF, EcorePackage.eINSTANCE.getEModelElement()), "feature:eContainer"); //$NON-NLS-1$
+        AQLEntry entry = aqlInterpreterAPI.initializeUser(List.of(), List.of(EcorePackage.eINSTANCE));
+        Result result = aqlInterpreterAPI.evaluateExpression(Map.of(SELF, EcorePackage.eINSTANCE.getEModelElement()), "feature:eContainer", entry); //$NON-NLS-1$
         Optional<List<Object>> asObjects = result.asObjects();
         assertThat(asObjects).isPresent();
         assertThat(asObjects.get()).contains(EcorePackage.eINSTANCE);
@@ -69,8 +79,8 @@ public class AQLInterpreterTestCases {
 
     @Test
     public void testEClassFeatureExpression() {
-        AQLInterpreter interpreter = new AQLInterpreter(List.of(), List.of(EcorePackage.eINSTANCE));
-        Result result = interpreter.evaluateExpression(Map.of(SELF, EcorePackage.eINSTANCE.getEModelElement()), "feature:eClass"); //$NON-NLS-1$
+        AQLEntry entry = aqlInterpreterAPI.initializeUser(List.of(), List.of(EcorePackage.eINSTANCE));
+        Result result = aqlInterpreterAPI.evaluateExpression(Map.of(SELF, EcorePackage.eINSTANCE.getEModelElement()), "feature:eClass", entry); //$NON-NLS-1$
         Optional<List<Object>> asObjects = result.asObjects();
         assertThat(asObjects).isPresent();
         assertThat(asObjects.get()).contains(EcorePackage.Literals.ECLASS);
@@ -78,8 +88,8 @@ public class AQLInterpreterTestCases {
 
     @Test
     public void testECrossReferencesFeatureExpression() {
-        AQLInterpreter interpreter = new AQLInterpreter(List.of(), List.of(EcorePackage.eINSTANCE));
-        Result result = interpreter.evaluateExpression(Map.of(SELF, EcorePackage.eINSTANCE.getEEnumLiteral()), "feature:eCrossReferences"); //$NON-NLS-1$
+        AQLEntry entry = aqlInterpreterAPI.initializeUser(List.of(), List.of(EcorePackage.eINSTANCE));
+        Result result = aqlInterpreterAPI.evaluateExpression(Map.of(SELF, EcorePackage.eINSTANCE.getEEnumLiteral()), "feature:eCrossReferences", entry); //$NON-NLS-1$
         Optional<List<Object>> asObjects = result.asObjects();
         assertThat(asObjects).isPresent();
         assertThat(asObjects.get()).contains(EcorePackage.Literals.EENUM_LITERAL__EENUM);
@@ -88,22 +98,22 @@ public class AQLInterpreterTestCases {
     @Test
     public void testBrokenEPackage() {
         EPackage broken = EcoreFactory.eINSTANCE.createEPackage();
-        AQLInterpreter interpreter = new AQLInterpreter(List.of(), List.of(broken));
-        assertThat(interpreter).isNotNull();
+        AQLEntry entry = aqlInterpreterAPI.initializeUser(List.of(), List.of(broken));
+        assertThat(entry).isNotNull();
     }
 
     @Test
     public void testNullExpressionEvaluatesToTrue() {
-        AQLInterpreter interpreter = new AQLInterpreter(List.of(), List.of(EcorePackage.eINSTANCE));
-        Result result = interpreter.evaluateExpression(Map.of(), null);
+        AQLEntry entry = aqlInterpreterAPI.initializeUser(List.of(), List.of(EcorePackage.eINSTANCE));
+        Result result = aqlInterpreterAPI.evaluateExpression(Map.of(), null, entry);
         assertThat(result).isNotNull();
         assertThat(result.asBoolean()).contains(Boolean.TRUE);
     }
 
     @Test
     public void testEmptyExpressionEvaluatesToTrue() {
-        AQLInterpreter interpreter = new AQLInterpreter(List.of(), List.of(EcorePackage.eINSTANCE));
-        Result result = interpreter.evaluateExpression(Map.of(), ""); //$NON-NLS-1$
+        AQLEntry entry = aqlInterpreterAPI.initializeUser(List.of(), List.of(EcorePackage.eINSTANCE));
+        Result result = interpreter.evaluateExpression(Map.of(), "", entry); //$NON-NLS-1$
         assertThat(result).isNotNull();
         assertThat(result.asBoolean()).contains(Boolean.TRUE);
     }

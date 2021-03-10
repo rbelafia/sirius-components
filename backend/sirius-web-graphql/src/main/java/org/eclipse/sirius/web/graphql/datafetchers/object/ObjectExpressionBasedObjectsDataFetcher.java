@@ -18,7 +18,9 @@ import java.util.Map;
 
 import org.eclipse.sirius.web.annotations.spring.graphql.QueryDataFetcher;
 import org.eclipse.sirius.web.graphql.schema.ObjectTypeProvider;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.interpreter.Result;
 import org.eclipse.sirius.web.representations.VariableManager;
 import org.eclipse.sirius.web.spring.graphql.api.IDataFetcherWithFieldCoordinates;
@@ -47,8 +49,10 @@ public class ObjectExpressionBasedObjectsDataFetcher implements IDataFetcherWith
         Object object = environment.getSource();
         String expression = environment.getArgument(ObjectTypeProvider.EXPRESSION_ARGUMENT);
 
-        AQLInterpreter interpreter = new AQLInterpreter(new ArrayList<>(), new ArrayList<>());
-        Result result = interpreter.evaluateExpression(Map.of(VariableManager.SELF, object), expression);
+        AQLInterpreter interpreter = new AQLInterpreter();
+        AQLInterpreterAPI interpreterAPI = new AQLInterpreterAPI(interpreter);
+        AQLEntry entry = interpreterAPI.initializeUser(new ArrayList<>(), new ArrayList<>());
+        Result result = interpreterAPI.evaluateExpression(Map.of(VariableManager.SELF, object), expression, entry);
         return result.asObjects().orElse(new ArrayList<>());
     }
 

@@ -15,7 +15,8 @@ package org.eclipse.sirius.web.compat.utils;
 import java.util.Objects;
 import java.util.function.Function;
 
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.interpreter.Result;
 import org.eclipse.sirius.web.representations.VariableManager;
 
@@ -28,19 +29,22 @@ public class StringValueProvider implements Function<VariableManager, String> {
 
     private static final String EMPTY_STRING = ""; //$NON-NLS-1$
 
-    private AQLInterpreter interpreter;
+    private AQLInterpreterAPI interpreter;
 
     private String expression;
 
-    public StringValueProvider(AQLInterpreter interpreter, String expression) {
+    private final AQLEntry entry;
+
+    public StringValueProvider(AQLInterpreterAPI interpreter, String expression, AQLEntry entry) {
         this.interpreter = interpreter;
         this.expression = Objects.requireNonNull(expression);
+        this.entry = entry;
     }
 
     @Override
     public String apply(VariableManager variableManager) {
         if (!this.expression.isBlank()) {
-            Result result = this.interpreter.evaluateExpression(variableManager.getVariables(), this.expression);
+            Result result = this.interpreter.evaluateExpression(variableManager.getVariables(), this.expression, entry);
             return result.asString().orElse(EMPTY_STRING);
         }
         return EMPTY_STRING;

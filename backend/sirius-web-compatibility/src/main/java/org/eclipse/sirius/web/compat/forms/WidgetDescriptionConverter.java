@@ -39,7 +39,8 @@ import org.eclipse.sirius.web.forms.description.RadioDescription;
 import org.eclipse.sirius.web.forms.description.SelectDescription;
 import org.eclipse.sirius.web.forms.description.TextareaDescription;
 import org.eclipse.sirius.web.forms.description.TextfieldDescription;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.representations.Status;
 import org.eclipse.sirius.web.representations.VariableManager;
 import org.slf4j.Logger;
@@ -56,7 +57,7 @@ public class WidgetDescriptionConverter {
 
     private final Logger logger = LoggerFactory.getLogger(WidgetDescriptionConverter.class);
 
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreter;
 
     private final IObjectService objectService;
 
@@ -64,12 +65,15 @@ public class WidgetDescriptionConverter {
 
     private final IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider;
 
-    public WidgetDescriptionConverter(AQLInterpreter interpreter, IObjectService objectService, IIdentifierProvider identifierProvider,
-            IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider) {
+    private final AQLEntry entry;
+
+    public WidgetDescriptionConverter(AQLInterpreterAPI interpreter, IObjectService objectService, IIdentifierProvider identifierProvider,
+                                      IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider, AQLEntry entry) {
         this.interpreter = Objects.requireNonNull(interpreter);
         this.objectService = Objects.requireNonNull(objectService);
         this.identifierProvider = Objects.requireNonNull(identifierProvider);
         this.modelOperationHandlerSwitchProvider = Objects.requireNonNull(modelOperationHandlerSwitchProvider);
+        this.entry = entry;
     }
 
     public Optional<AbstractWidgetDescription> convert(WidgetDescription controlDescription) {
@@ -92,10 +96,10 @@ public class WidgetDescriptionConverter {
 
     private TextfieldDescription convertTextfield(org.eclipse.sirius.properties.TextDescription textDescription) {
         String labelExpression = Optional.ofNullable(textDescription.getLabelExpression()).orElse(""); //$NON-NLS-1$
-        StringValueProvider labelProvider = new StringValueProvider(this.interpreter, labelExpression);
+        StringValueProvider labelProvider = new StringValueProvider(this.interpreter, labelExpression, entry);
 
         String valueExpression = Optional.ofNullable(textDescription.getValueExpression()).orElse(""); //$NON-NLS-1$
-        StringValueProvider valueProvider = new StringValueProvider(this.interpreter, valueExpression);
+        StringValueProvider valueProvider = new StringValueProvider(this.interpreter, valueExpression, entry);
 
         BiFunction<VariableManager, String, Status> newValueHandler = this.getNewValueHandler(textDescription.getInitialOperation());
 
@@ -112,10 +116,10 @@ public class WidgetDescriptionConverter {
 
     private TextareaDescription convertTextarea(org.eclipse.sirius.properties.TextAreaDescription textAreaDescription) {
         String labelExpression = Optional.ofNullable(textAreaDescription.getLabelExpression()).orElse(""); //$NON-NLS-1$
-        StringValueProvider labelProvider = new StringValueProvider(this.interpreter, labelExpression);
+        StringValueProvider labelProvider = new StringValueProvider(this.interpreter, labelExpression, entry);
 
         String valueExpression = Optional.ofNullable(textAreaDescription.getValueExpression()).orElse(""); //$NON-NLS-1$
-        StringValueProvider valueProvider = new StringValueProvider(this.interpreter, valueExpression);
+        StringValueProvider valueProvider = new StringValueProvider(this.interpreter, valueExpression, entry);
 
         BiFunction<VariableManager, String, Status> newValueHandler = this.getNewValueHandler(textAreaDescription.getInitialOperation());
 
@@ -137,7 +141,7 @@ public class WidgetDescriptionConverter {
 
             ModelOperation modelOperation = initialOperation.getFirstModelOperations();
 
-            var modelOperationHandlerSwitch = this.modelOperationHandlerSwitchProvider.getModelOperationHandlerSwitch(this.interpreter);
+            var modelOperationHandlerSwitch = this.modelOperationHandlerSwitchProvider.getModelOperationHandlerSwitch(this.interpreter, this.entry);
             Optional<IModelOperationHandler> optionalModelOperationHandler = modelOperationHandlerSwitch.apply(modelOperation);
             return optionalModelOperationHandler.map(handler -> {
                 return handler.handle(childVariableManager.getVariables());
@@ -148,7 +152,7 @@ public class WidgetDescriptionConverter {
 
     private RadioDescription convertRadio(org.eclipse.sirius.properties.RadioDescription radioDescription) {
         String labelExpression = Optional.ofNullable(radioDescription.getLabelExpression()).orElse(""); //$NON-NLS-1$
-        StringValueProvider labelProvider = new StringValueProvider(this.interpreter, labelExpression);
+        StringValueProvider labelProvider = new StringValueProvider(this.interpreter, labelExpression, entry);
 
         Function<VariableManager, String> optionIdProvider = variableManager -> {
             Object candidate = variableManager.getVariables().get(RadioComponent.CANDIDATE_VARIABLE);
@@ -156,19 +160,19 @@ public class WidgetDescriptionConverter {
         };
 
         Function<VariableManager, Boolean> optionSelectedProvider = variableManager -> {
-            Optional<Object> optionalResult = this.interpreter.evaluateExpression(variableManager.getVariables(), radioDescription.getValueExpression()).asObject();
+            Optional<Object> optionalResult = this.interpreter.evaluateExpression(variableManager.getVariables(), radioDescription.getValueExpression(), entry).asObject();
             Object candidate = variableManager.getVariables().get(RadioComponent.CANDIDATE_VARIABLE);
 
             return optionalResult.map(result -> candidate.equals(result)).orElse(Boolean.FALSE);
         };
 
         Function<VariableManager, List<Object>> optionsProvider = variableManager -> {
-            Optional<List<Object>> optional = this.interpreter.evaluateExpression(variableManager.getVariables(), radioDescription.getCandidatesExpression()).asObjects();
+            Optional<List<Object>> optional = this.interpreter.evaluateExpression(variableManager.getVariables(), radioDescription.getCandidatesExpression(), entry).asObjects();
             return optional.orElse(Collections.emptyList());
         };
 
         String candidateDisplayExpression = Optional.ofNullable(radioDescription.getCandidateDisplayExpression()).orElse(""); //$NON-NLS-1$
-        StringValueProvider optionLabelProvider = new StringValueProvider(this.interpreter, candidateDisplayExpression);
+        StringValueProvider optionLabelProvider = new StringValueProvider(this.interpreter, candidateDisplayExpression, entry);
 
         BiFunction<VariableManager, String, Status> newValueHandler = (variableManager, newValue) -> {
             VariableManager childVariableManager = variableManager.createChild();
@@ -184,7 +188,7 @@ public class WidgetDescriptionConverter {
             InitialOperation initialOperation = radioDescription.getInitialOperation();
             ModelOperation modelOperation = initialOperation.getFirstModelOperations();
 
-            var modelOperationHandlerSwitch = this.modelOperationHandlerSwitchProvider.getModelOperationHandlerSwitch(this.interpreter);
+            var modelOperationHandlerSwitch = this.modelOperationHandlerSwitchProvider.getModelOperationHandlerSwitch(this.interpreter, this.entry);
             Optional<IModelOperationHandler> optionalModelOperationHandler = modelOperationHandlerSwitch.apply(modelOperation);
             return optionalModelOperationHandler.map(handler -> {
                 return handler.handle(childVariableManager.getVariables());
@@ -207,20 +211,20 @@ public class WidgetDescriptionConverter {
 
     private SelectDescription convertSelect(org.eclipse.sirius.properties.SelectDescription selectDescription) {
         // @formatter:off
-        StringValueProvider labelProvider = new StringValueProvider(this.interpreter, selectDescription.getLabelExpression());
+        StringValueProvider labelProvider = new StringValueProvider(this.interpreter, selectDescription.getLabelExpression(), entry);
         Function<VariableManager, String> valueProvider = variableManager -> {
             String valueExpression = selectDescription.getValueExpression();
-            return this.interpreter.evaluateExpression(variableManager.getVariables(), valueExpression).asObject().map(this.objectService::getId).orElse(null);
+            return this.interpreter.evaluateExpression(variableManager.getVariables(), valueExpression, entry).asObject().map(this.objectService::getId).orElse(null);
         };
         // @formatter:on
 
         Function<VariableManager, List<Object>> optionsProvider = (variableManager) -> {
             String candidateExpression = selectDescription.getCandidatesExpression();
-            return this.interpreter.evaluateExpression(variableManager.getVariables(), candidateExpression).asObjects().orElse(new ArrayList<>());
+            return this.interpreter.evaluateExpression(variableManager.getVariables(), candidateExpression, entry).asObjects().orElse(new ArrayList<>());
         };
 
         String candidateDisplayExpression = Optional.ofNullable(selectDescription.getCandidateDisplayExpression()).orElse(""); //$NON-NLS-1$
-        StringValueProvider optionLabelProvider = new StringValueProvider(this.interpreter, candidateDisplayExpression);
+        StringValueProvider optionLabelProvider = new StringValueProvider(this.interpreter, candidateDisplayExpression, entry);
 
         Function<VariableManager, String> optionIdProvider = variableManager -> {
             Object candidate = variableManager.getVariables().get(SelectComponent.CANDIDATE_VARIABLE);
@@ -234,7 +238,7 @@ public class WidgetDescriptionConverter {
             InitialOperation initialOperation = selectDescription.getInitialOperation();
             ModelOperation modelOperation = initialOperation.getFirstModelOperations();
 
-            var modelOperationHandlerSwitch = this.modelOperationHandlerSwitchProvider.getModelOperationHandlerSwitch(this.interpreter);
+            var modelOperationHandlerSwitch = this.modelOperationHandlerSwitchProvider.getModelOperationHandlerSwitch(this.interpreter, this.entry);
             Optional<IModelOperationHandler> optionalModelOperationHandler = modelOperationHandlerSwitch.apply(modelOperation);
             return optionalModelOperationHandler.map(handler -> {
                 return handler.handle(variables);
@@ -256,7 +260,7 @@ public class WidgetDescriptionConverter {
     }
 
     private CheckboxDescription convertCheckbox(org.eclipse.sirius.properties.CheckboxDescription checkboxDescription) {
-        StringValueProvider labelProvider = new StringValueProvider(this.interpreter, checkboxDescription.getLabelExpression());
+        StringValueProvider labelProvider = new StringValueProvider(this.interpreter, checkboxDescription.getLabelExpression(), entry);
 
         BiFunction<VariableManager, Boolean, Status> newValueHandler = (variableManager, newValue) -> {
             Map<String, Object> variables = variableManager.getVariables();
@@ -265,7 +269,7 @@ public class WidgetDescriptionConverter {
             InitialOperation initialOperation = checkboxDescription.getInitialOperation();
             ModelOperation modelOperation = initialOperation.getFirstModelOperations();
 
-            var modelOperationHandlerSwitch = this.modelOperationHandlerSwitchProvider.getModelOperationHandlerSwitch(this.interpreter);
+            var modelOperationHandlerSwitch = this.modelOperationHandlerSwitchProvider.getModelOperationHandlerSwitch(this.interpreter, this.entry);
             Optional<IModelOperationHandler> optionalModelOperationHandler = modelOperationHandlerSwitch.apply(modelOperation);
             return optionalModelOperationHandler.map(handler -> {
                 return handler.handle(variables);
@@ -273,7 +277,7 @@ public class WidgetDescriptionConverter {
         };
 
         String valueExpression = Optional.ofNullable(checkboxDescription.getValueExpression()).orElse(""); //$NON-NLS-1$
-        Function<VariableManager, Boolean> valueProvider = new BooleanValueProvider(this.interpreter, valueExpression);
+        Function<VariableManager, Boolean> valueProvider = new BooleanValueProvider(this.interpreter, valueExpression, entry);
 
         //@formatter:off
         return CheckboxDescription.newCheckboxDescription(this.identifierProvider.getIdentifier(checkboxDescription))

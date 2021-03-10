@@ -26,7 +26,8 @@ import org.eclipse.sirius.web.components.Element;
 import org.eclipse.sirius.web.diagrams.description.DiagramDescription;
 import org.eclipse.sirius.web.diagrams.elements.NodeElementProps;
 import org.eclipse.sirius.web.diagrams.renderer.DiagramRenderingCache;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.interpreter.Result;
 import org.eclipse.sirius.web.representations.VariableManager;
 
@@ -39,14 +40,17 @@ public class DomainBasedSourceNodesProvider implements Function<VariableManager,
 
     private final EdgeMapping edgeMapping;
 
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreter;
 
     private final IIdentifierProvider identifierProvider;
 
-    public DomainBasedSourceNodesProvider(EdgeMapping edgeMapping, AQLInterpreter interpreter, IIdentifierProvider identifierProvider) {
+    private final AQLEntry entry;
+
+    public DomainBasedSourceNodesProvider(EdgeMapping edgeMapping, AQLInterpreterAPI interpreter, IIdentifierProvider identifierProvider, AQLEntry entry) {
         this.edgeMapping = Objects.requireNonNull(edgeMapping);
         this.interpreter = Objects.requireNonNull(interpreter);
         this.identifierProvider = Objects.requireNonNull(identifierProvider);
+        this.entry = entry;
     }
 
     @Override
@@ -59,7 +63,7 @@ public class DomainBasedSourceNodesProvider implements Function<VariableManager,
         DiagramRenderingCache cache = optionalCache.get();
         String sourceFinderExpression = this.edgeMapping.getSourceFinderExpression();
 
-        Result result = this.interpreter.evaluateExpression(variableManager.getVariables(), sourceFinderExpression);
+        Result result = this.interpreter.evaluateExpression(variableManager.getVariables(), sourceFinderExpression, entry);
         List<Object> semanticCandidates = result.asObjects().orElse(List.of());
 
         // @formatter:off

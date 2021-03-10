@@ -36,7 +36,8 @@ import org.eclipse.sirius.web.diagrams.NodeType;
 import org.eclipse.sirius.web.diagrams.description.LabelDescription;
 import org.eclipse.sirius.web.diagrams.description.LabelStyleDescription;
 import org.eclipse.sirius.web.diagrams.description.NodeDescription;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.VariableManager;
 import org.eclipse.sirius.web.services.api.objects.IEditService;
 
@@ -51,7 +52,7 @@ public class NodeMappingConverter {
 
     private final IEditService editService;
 
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreter;
 
     private final IIdentifierProvider identifierProvider;
 
@@ -61,19 +62,22 @@ public class NodeMappingConverter {
 
     private final LabelStyleDescriptionConverter labelStyleDescriptionConverter;
 
-    public NodeMappingConverter(IObjectService objectService, IEditService editService, AQLInterpreter interpreter, IIdentifierProvider identifierProvider,
-            ISemanticCandidatesProviderFactory semanticCandidatesProviderFactory, IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider) {
+    private final AQLEntry entry;
+
+    public NodeMappingConverter(IObjectService objectService, IEditService editService, AQLInterpreterAPI interpreter, IIdentifierProvider identifierProvider,
+                                ISemanticCandidatesProviderFactory semanticCandidatesProviderFactory, IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider, AQLEntry entry) {
         this.objectService = Objects.requireNonNull(objectService);
         this.editService = Objects.requireNonNull(editService);
         this.interpreter = Objects.requireNonNull(interpreter);
         this.identifierProvider = Objects.requireNonNull(identifierProvider);
         this.semanticCandidatesProviderFactory = Objects.requireNonNull(semanticCandidatesProviderFactory);
         this.modelOperationHandlerSwitchProvider = Objects.requireNonNull(modelOperationHandlerSwitchProvider);
-        this.labelStyleDescriptionConverter = new LabelStyleDescriptionConverter(this.interpreter, this.objectService);
+        this.entry = entry;
+        this.labelStyleDescriptionConverter = new LabelStyleDescriptionConverter(this.interpreter, this.objectService, this.entry);
     }
 
     public NodeDescription convert(NodeMapping nodeMapping, Map<UUID, NodeDescription> id2NodeDescriptions) {
-        NodeStyleDescriptionProvider nodeStyleDescriptionProvider = new NodeStyleDescriptionProvider(this.interpreter, nodeMapping);
+        NodeStyleDescriptionProvider nodeStyleDescriptionProvider = new NodeStyleDescriptionProvider(this.interpreter, nodeMapping, entry);
 
         Function<VariableManager, LabelStyleDescription> labelStyleDescriptionProvider = variableManager -> {
             NodeStyleDescription styleDescription = nodeStyleDescriptionProvider.getNodeStyleDescription(variableManager);
@@ -84,7 +88,7 @@ public class NodeMappingConverter {
         Function<VariableManager, String> labelExpressionProvider = variableManager -> {
             NodeStyleDescription styleDescription = nodeStyleDescriptionProvider.getNodeStyleDescription(variableManager);
             String labelExpression = Optional.ofNullable(styleDescription).map(NodeStyleDescription::getLabelExpression).orElse(""); //$NON-NLS-1$
-            return new StringValueProvider(this.interpreter, labelExpression).apply(variableManager);
+            return new StringValueProvider(this.interpreter, labelExpression, entry).apply(variableManager);
         };
 
         Function<VariableManager, String> labelIdProvider = variableManager -> {
@@ -117,21 +121,21 @@ public class NodeMappingConverter {
             return NodeType.NODE_RECTANGLE;
         };
 
-        Function<VariableManager, INodeStyle> styleProvider = new NodeMappingStyleProvider(this.interpreter, nodeMapping);
+        Function<VariableManager, INodeStyle> styleProvider = new NodeMappingStyleProvider(this.interpreter, nodeMapping, this.entry);
 
         String domainClass = nodeMapping.getDomainClass();
         String semanticCandidatesExpression = nodeMapping.getSemanticCandidatesExpression();
         String preconditionExpression = nodeMapping.getPreconditionExpression();
         Function<VariableManager, List<Object>> semanticElementsProvider = this.semanticCandidatesProviderFactory.getSemanticCandidatesProvider(this.interpreter, domainClass,
-                semanticCandidatesExpression, preconditionExpression);
+                semanticCandidatesExpression, preconditionExpression, this.entry);
 
         // @formatter:off
         List<NodeDescription> borderNodeDescriptions = nodeMapping.getBorderedNodeMappings().stream()
-                .map(borderNodeMapping -> new NodeMappingConverter(this.objectService, this.editService, this.interpreter, this.identifierProvider, this.semanticCandidatesProviderFactory, this.modelOperationHandlerSwitchProvider).convert(borderNodeMapping, id2NodeDescriptions))
+                .map(borderNodeMapping -> new NodeMappingConverter(this.objectService, this.editService, this.interpreter, this.identifierProvider, this.semanticCandidatesProviderFactory, this.modelOperationHandlerSwitchProvider, entry).convert(borderNodeMapping, id2NodeDescriptions))
                 .collect(Collectors.toList());
         // @formatter:on
 
-        ToolConverter toolConverter = new ToolConverter(this.interpreter, this.editService, this.modelOperationHandlerSwitchProvider);
+        ToolConverter toolConverter = new ToolConverter(this.interpreter, this.editService, this.modelOperationHandlerSwitchProvider, entry);
         var deleteHandler = toolConverter.createDeleteToolHandler(nodeMapping.getDeletionDescription());
         var labelEditHandler = toolConverter.createDirectEditToolHandler(nodeMapping.getLabelDirectEdit());
 

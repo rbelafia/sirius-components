@@ -48,7 +48,7 @@ public class ForOperationHandlerTestCases {
         this.operationTestContext = new OperationTestContext();
 
         this.forOperation = ToolFactory.eINSTANCE.createFor();
-        this.forOperationHandler = new ForOperationHandler(this.operationTestContext.getInterpreter(), new ChildModelOperationHandler(), this.forOperation);
+        this.forOperationHandler = new ForOperationHandler(this.operationTestContext.getInterpreter(), new ChildModelOperationHandler(), this.forOperation, this.operationTestContext.getEntry());
     }
 
     @Test

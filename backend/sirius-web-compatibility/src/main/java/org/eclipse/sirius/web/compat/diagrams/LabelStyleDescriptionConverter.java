@@ -19,7 +19,8 @@ import java.util.function.Function;
 import org.eclipse.sirius.viewpoint.FontFormat;
 import org.eclipse.sirius.web.core.api.IObjectService;
 import org.eclipse.sirius.web.diagrams.description.LabelStyleDescription;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.VariableManager;
 
 /**
@@ -28,13 +29,16 @@ import org.eclipse.sirius.web.representations.VariableManager;
  * @author hmarchadour
  */
 public class LabelStyleDescriptionConverter {
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreter;
 
     private final IObjectService objectService;
 
-    public LabelStyleDescriptionConverter(AQLInterpreter interpreter, IObjectService objectService) {
+    private final AQLEntry entry;
+
+    public LabelStyleDescriptionConverter(AQLInterpreterAPI interpreter, IObjectService objectService, AQLEntry entry) {
         this.objectService = Objects.requireNonNull(objectService);
         this.interpreter = Objects.requireNonNull(interpreter);
+        this.entry = entry;
     }
 
     public LabelStyleDescription convert(org.eclipse.sirius.viewpoint.description.style.BasicLabelStyleDescription labelStyleDescription) {
@@ -69,7 +73,7 @@ public class LabelStyleDescriptionConverter {
         };
 
         Function<VariableManager, String> colorProvider = variableManager -> {
-            return new ColorDescriptionConverter(this.interpreter, variableManager).convert(labelStyleDescription.getLabelColor());
+            return new ColorDescriptionConverter(this.interpreter, variableManager, entry).convert(labelStyleDescription.getLabelColor());
         };
 
         // @formatter:off

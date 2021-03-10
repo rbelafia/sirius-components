@@ -21,7 +21,8 @@ import java.util.Optional;
 import org.eclipse.sirius.viewpoint.description.tool.ChangeContext;
 import org.eclipse.sirius.viewpoint.description.tool.ModelOperation;
 import org.eclipse.sirius.web.compat.api.IModelOperationHandler;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.representations.Status;
 import org.eclipse.sirius.web.representations.VariableManager;
 
@@ -32,16 +33,19 @@ import org.eclipse.sirius.web.representations.VariableManager;
  */
 public class ChangeContextOperationHandler implements IModelOperationHandler {
 
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreter;
 
     private final ChildModelOperationHandler childModelOperationHandler;
 
     private final ChangeContext changeContext;
 
-    public ChangeContextOperationHandler(AQLInterpreter interpreter, ChildModelOperationHandler childModelOperationHandler, ChangeContext changeContext) {
+    private final AQLEntry entry;
+
+    public ChangeContextOperationHandler(AQLInterpreterAPI interpreter, ChildModelOperationHandler childModelOperationHandler, ChangeContext changeContext, AQLEntry entry) {
         this.interpreter = Objects.requireNonNull(interpreter);
         this.childModelOperationHandler = Objects.requireNonNull(childModelOperationHandler);
         this.changeContext = Objects.requireNonNull(changeContext);
+        this.entry = entry;
     }
 
     @Override
@@ -49,12 +53,12 @@ public class ChangeContextOperationHandler implements IModelOperationHandler {
         String browseExpression = this.changeContext.getBrowseExpression();
         Map<String, Object> childVariables = new HashMap<>(variables);
         if (browseExpression != null && !browseExpression.isBlank()) {
-            Optional<Object> optionalObject = this.interpreter.evaluateExpression(variables, browseExpression).asObject();
+            Optional<Object> optionalObject = this.interpreter.evaluateExpression(variables, browseExpression, entry).asObject();
             optionalObject.ifPresent(object -> childVariables.put(VariableManager.SELF, object));
         }
 
         List<ModelOperation> subModelOperations = this.changeContext.getSubModelOperations();
-        return this.childModelOperationHandler.handle(this.interpreter, childVariables, subModelOperations);
+        return this.childModelOperationHandler.handle(this.interpreter, childVariables, subModelOperations, entry);
     }
 
 }

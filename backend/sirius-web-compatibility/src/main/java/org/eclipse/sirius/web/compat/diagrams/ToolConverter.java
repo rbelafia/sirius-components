@@ -22,7 +22,8 @@ import org.eclipse.sirius.diagram.description.tool.DeleteElementDescription;
 import org.eclipse.sirius.diagram.description.tool.DirectEditLabel;
 import org.eclipse.sirius.viewpoint.description.tool.InitialOperation;
 import org.eclipse.sirius.web.compat.api.IModelOperationHandlerSwitchProvider;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.Status;
 import org.eclipse.sirius.web.representations.VariableManager;
 import org.eclipse.sirius.web.services.api.objects.IEditService;
@@ -34,16 +35,19 @@ import org.eclipse.sirius.web.services.api.objects.IEditService;
  * @author pcdavid
  */
 public class ToolConverter {
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreter;
 
     private final IEditService editService;
 
     private final IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider;
 
-    public ToolConverter(AQLInterpreter interpreter, IEditService editService, IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider) {
+    private final AQLEntry entry;
+
+    public ToolConverter(AQLInterpreterAPI interpreter, IEditService editService, IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider, AQLEntry entry) {
         this.interpreter = Objects.requireNonNull(interpreter);
         this.editService = Objects.requireNonNull(editService);
         this.modelOperationHandlerSwitchProvider = Objects.requireNonNull(modelOperationHandlerSwitchProvider);
+        this.entry = entry;
     }
 
     public BiFunction<VariableManager, String, Status> createDirectEditToolHandler(DirectEditLabel labelEditDescription) {
@@ -53,7 +57,7 @@ public class ToolConverter {
             return (variableManager, newText) -> {
                 Map<String, Object> variables = variableManager.getVariables();
                 variables.put("arg0", newText); //$NON-NLS-1$
-                var modelOperationHandlerSwitch = this.modelOperationHandlerSwitchProvider.getModelOperationHandlerSwitch(this.interpreter);
+                var modelOperationHandlerSwitch = this.modelOperationHandlerSwitchProvider.getModelOperationHandlerSwitch(this.interpreter, entry);
                 return modelOperationHandlerSwitch.apply(initialOperation.getFirstModelOperations()).map(handler -> {
                     return handler.handle(variables);
                 }).orElse(Status.ERROR);
@@ -70,7 +74,7 @@ public class ToolConverter {
             InitialOperation initialOperation = optionalInitialOperation.get();
             return variableManager -> {
                 Map<String, Object> variables = variableManager.getVariables();
-                var modelOperationHandlerSwitch = this.modelOperationHandlerSwitchProvider.getModelOperationHandlerSwitch(this.interpreter);
+                var modelOperationHandlerSwitch = this.modelOperationHandlerSwitchProvider.getModelOperationHandlerSwitch(this.interpreter, entry);
                 return modelOperationHandlerSwitch.apply(initialOperation.getFirstModelOperations()).map(handler -> {
                     return handler.handle(variables);
                 }).orElse(Status.ERROR);

@@ -35,8 +35,11 @@ import org.eclipse.sirius.web.compat.api.ISemanticCandidatesProviderFactory;
 import org.eclipse.sirius.web.diagrams.description.LabelDescription;
 import org.eclipse.sirius.web.diagrams.description.LabelStyleDescription;
 import org.eclipse.sirius.web.diagrams.description.NodeDescription;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.VariableManager;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -53,6 +56,19 @@ public class MappingConverterTestCases {
     private static final String PLUGIN_ID = "my.sirius.plugin"; //$NON-NLS-1$
 
     private static final String ICON_PATH = "/my/icon/path/MyIcon.gif"; //$NON-NLS-1$
+
+    private AQLInterpreter interpreter;
+
+    private AQLInterpreterAPI interpreterAPI;
+
+    private AQLEntry entry;
+
+    @Before
+    public void setUp() throws Exception {
+        interpreter = new AQLInterpreter();
+        interpreterAPI = new AQLInterpreterAPI(interpreter);
+        entry = interpreterAPI.initializeUser(List.of(), List.of(EcorePackage.eINSTANCE));
+    }
 
     @Test
     public void testContainerStylePropertiesFromConditionalStyle() {
@@ -97,13 +113,12 @@ public class MappingConverterTestCases {
         containerMapping.getConditionnalStyles().add(this.createConditionalContainerStyle(EXPRESSION_TRUE, thirdConditionalStyle));
 
         IIdentifierProvider identifierProvider = element -> UUID.randomUUID().toString();
-        ISemanticCandidatesProviderFactory semanticCandidatesProviderFactory = (interpreter, domainClass, semanticCandidatesExpression, preconditionExpression) -> variableManager -> List.of();
-        IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider = interpreter -> modelOperation -> Optional.empty();
+        ISemanticCandidatesProviderFactory semanticCandidatesProviderFactory = (interpreter, entry, domainClass, semanticCandidatesExpression, preconditionExpression) -> variableManager -> List.of();
+        IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider = (interpreterAPI, entry) -> modelOperation -> Optional.empty();
 
         VariableManager variableManager = new VariableManager();
-        AQLInterpreter interpreter = new AQLInterpreter(List.of(), List.of(EcorePackage.eINSTANCE));
-        ContainerMappingConverter converter = new ContainerMappingConverter(new NoOpObjectService(), new NoOpEditService(), interpreter, identifierProvider, semanticCandidatesProviderFactory,
-                modelOperationHandlerSwitchProvider);
+        ContainerMappingConverter converter = new ContainerMappingConverter(new NoOpObjectService(), new NoOpEditService(), interpreterAPI, identifierProvider, semanticCandidatesProviderFactory,
+                modelOperationHandlerSwitchProvider, entry);
 
         NodeDescription convertedNodeDescription = converter.convert(containerMapping, new HashMap<UUID, NodeDescription>());
         LabelDescription labelDescription = convertedNodeDescription.getLabelDescription();
@@ -171,13 +186,12 @@ public class MappingConverterTestCases {
         nodeMapping.getConditionnalStyles().add(this.createConditionalNodeStyle(EXPRESSION_TRUE, thirdConditionalStyle));
 
         IIdentifierProvider identifierProvider = element -> UUID.randomUUID().toString();
-        ISemanticCandidatesProviderFactory semanticCandidatesProviderFactory = (interpreter, domainClass, semanticCandidatesExpression, preconditionExpression) -> variableManager -> List.of();
-        IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider = interpreter -> modelOperation -> Optional.empty();
+        ISemanticCandidatesProviderFactory semanticCandidatesProviderFactory = (interpreterAPI, domainClass, semanticCandidatesExpression, preconditionExpression, aqlEntry) -> variableManager -> List.of();
+        IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider = (interpreterAPI, aqlEntry) -> modelOperation -> Optional.empty();
 
         VariableManager variableManager = new VariableManager();
-        AQLInterpreter interpreter = new AQLInterpreter(List.of(), List.of(EcorePackage.eINSTANCE));
-        NodeMappingConverter converter = new NodeMappingConverter(new NoOpObjectService(), new NoOpEditService(), interpreter, identifierProvider, semanticCandidatesProviderFactory,
-                modelOperationHandlerSwitchProvider);
+        NodeMappingConverter converter = new NodeMappingConverter(new NoOpObjectService(), new NoOpEditService(), interpreterAPI, identifierProvider, semanticCandidatesProviderFactory,
+                modelOperationHandlerSwitchProvider, entry);
 
         NodeDescription convertedNodeDescription = converter.convert(nodeMapping, new HashMap<UUID, NodeDescription>());
         LabelDescription labelDescription = convertedNodeDescription.getLabelDescription();

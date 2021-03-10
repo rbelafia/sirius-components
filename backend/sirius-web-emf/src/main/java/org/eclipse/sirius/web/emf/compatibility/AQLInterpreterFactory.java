@@ -26,9 +26,11 @@ import org.eclipse.sirius.viewpoint.description.Group;
 import org.eclipse.sirius.viewpoint.description.JavaExtension;
 import org.eclipse.sirius.viewpoint.description.Viewpoint;
 import org.eclipse.sirius.web.compat.api.IAQLInterpreterFactory;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
@@ -41,8 +43,15 @@ public class AQLInterpreterFactory implements IAQLInterpreterFactory {
 
     private final Logger logger = LoggerFactory.getLogger(AQLInterpreterFactory.class);
 
+    private final AQLInterpreterAPI aqlInterpreterAPI;
+
+    @Autowired
+    public AQLInterpreterFactory(AQLInterpreterAPI aqlInterpreterAPI) {
+        this.aqlInterpreterAPI = aqlInterpreterAPI;
+    }
+
     @Override
-    public AQLInterpreter create(DiagramDescription diagramDescription) {
+    public AQLEntry create(DiagramDescription diagramDescription) {
         // @formatter:off
         var javaClasses = Optional.of(diagramDescription.eContainer())
                 .filter(Viewpoint.class::isInstance)
@@ -52,11 +61,11 @@ public class AQLInterpreterFactory implements IAQLInterpreterFactory {
         // @formatter:on
 
         List<EPackage> ePackages = diagramDescription.getMetamodel();
-        return new AQLInterpreter(javaClasses, ePackages);
+        return aqlInterpreterAPI.initializeUser(javaClasses, ePackages);
     }
 
     @Override
-    public AQLInterpreter create(ViewExtensionDescription viewExtensionDescription) {
+    public AQLEntry create(ViewExtensionDescription viewExtensionDescription) {
         // @formatter:off
         List<Viewpoint> viewpoints = Optional.of(viewExtensionDescription.eContainer())
                 .filter(Group.class::isInstance)
@@ -72,7 +81,7 @@ public class AQLInterpreterFactory implements IAQLInterpreterFactory {
 
         List<EPackage> ePackages = viewExtensionDescription.getMetamodels();
 
-        return new AQLInterpreter(javaClasses, ePackages);
+        return aqlInterpreterAPI.initializeUser(javaClasses, ePackages);
     }
 
     private List<Class<?>> getJavaServices(Viewpoint viewpoint) {

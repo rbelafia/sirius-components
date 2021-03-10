@@ -24,7 +24,8 @@ import org.eclipse.sirius.web.compat.api.ISemanticCandidatesProviderFactory;
 import org.eclipse.sirius.web.compat.utils.StringValueProvider;
 import org.eclipse.sirius.web.forms.description.GroupDescription;
 import org.eclipse.sirius.web.forms.description.PageDescription;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.VariableManager;
 
 /**
@@ -34,26 +35,29 @@ import org.eclipse.sirius.web.representations.VariableManager;
  */
 public class PageDescriptionConverter {
 
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreterAPI;
 
     private final IIdentifierProvider identifierProvider;
 
     private final ISemanticCandidatesProviderFactory semanticCandidatesProviderFactory;
 
-    public PageDescriptionConverter(AQLInterpreter interpreter, IIdentifierProvider identifierProvider, ISemanticCandidatesProviderFactory semanticCandidatesProviderFactory) {
-        this.interpreter = Objects.requireNonNull(interpreter);
+    private final AQLEntry entry;
+
+    public PageDescriptionConverter(AQLInterpreterAPI interpreterAPI, IIdentifierProvider identifierProvider, ISemanticCandidatesProviderFactory semanticCandidatesProviderFactory, AQLEntry entry) {
+        this.interpreterAPI = Objects.requireNonNull(interpreterAPI);
         this.identifierProvider = Objects.requireNonNull(identifierProvider);
         this.semanticCandidatesProviderFactory = Objects.requireNonNull(semanticCandidatesProviderFactory);
+        this.entry = entry;
     }
 
     public PageDescription convert(org.eclipse.sirius.properties.PageDescription siriusPageDescription,
             Map<org.eclipse.sirius.properties.GroupDescription, GroupDescription> siriusGroup2SiriusWebGroup) {
-        StringValueProvider labelProvider = new StringValueProvider(this.interpreter, siriusPageDescription.getLabelExpression());
+        StringValueProvider labelProvider = new StringValueProvider(this.interpreterAPI, siriusPageDescription.getLabelExpression(), entry);
 
         String domainClass = Optional.ofNullable(siriusPageDescription.getDomainClass()).orElse(""); //$NON-NLS-1$
         String semanticCandidatesExpression = Optional.ofNullable(siriusPageDescription.getSemanticCandidateExpression()).orElse(""); //$NON-NLS-1$
         String preconditionExpression = Optional.ofNullable(siriusPageDescription.getPreconditionExpression()).orElse(""); //$NON-NLS-1$
-        var semanticCandidatesProvider = this.semanticCandidatesProviderFactory.getSemanticCandidatesProvider(this.interpreter, domainClass, semanticCandidatesExpression, preconditionExpression);
+        var semanticCandidatesProvider = this.semanticCandidatesProviderFactory.getSemanticCandidatesProvider(this.interpreterAPI, domainClass, semanticCandidatesExpression, preconditionExpression, entry);
 
         Predicate<VariableManager> canCreatePredicate = (variableManager) -> {
             Object object = variableManager.getVariables().get(VariableManager.SELF);

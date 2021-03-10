@@ -23,7 +23,8 @@ import org.eclipse.emf.ecore.EStructuralFeature.Setting;
 import org.eclipse.emf.ecore.util.ECrossReferenceAdapter;
 import org.eclipse.sirius.viewpoint.description.EAttributeCustomization;
 import org.eclipse.sirius.viewpoint.description.VSMElementCustomization;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.interpreter.Result;
 import org.eclipse.sirius.web.representations.VariableManager;
 
@@ -34,13 +35,16 @@ import org.eclipse.sirius.web.representations.VariableManager;
  */
 public class EAttributeCustomizationProvider {
 
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreterAPI;
 
     private final VariableManager variableManager;
 
-    public EAttributeCustomizationProvider(AQLInterpreter interpreter, VariableManager variableManager) {
-        this.interpreter = Objects.requireNonNull(interpreter);
+    private final AQLEntry entry;
+
+    public EAttributeCustomizationProvider(AQLInterpreterAPI interpreterAPI, VariableManager variableManager, AQLEntry entry) {
+        this.interpreterAPI = Objects.requireNonNull(interpreterAPI);
         this.variableManager = Objects.requireNonNull(variableManager);
+        this.entry = entry;
     }
 
     public Optional<EAttributeCustomization> getEAttributeCustomization(EObject eObject, String attributeName) {
@@ -71,7 +75,7 @@ public class EAttributeCustomizationProvider {
         if (eAttributeCustomization.eContainer() instanceof VSMElementCustomization) {
             VSMElementCustomization elementCustomization = (VSMElementCustomization) eAttributeCustomization.eContainer();
             String predicate = elementCustomization.getPredicateExpression();
-            Result result = this.interpreter.evaluateExpression(this.variableManager.getVariables(), predicate);
+            Result result = this.interpreterAPI.evaluateExpression(this.variableManager.getVariables(), predicate, entry);
             return result.asBoolean().orElse(false);
         }
         return false;

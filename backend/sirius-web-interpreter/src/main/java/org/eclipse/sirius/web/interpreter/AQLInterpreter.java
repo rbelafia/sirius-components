@@ -16,12 +16,15 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
+
+import org.antlr.v4.runtime.misc.Pair;
 import org.eclipse.acceleo.query.runtime.EvaluationResult;
 import org.eclipse.acceleo.query.runtime.IQueryBuilderEngine;
 import org.eclipse.acceleo.query.runtime.IQueryBuilderEngine.AstResult;
@@ -39,12 +42,16 @@ import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.impl.EStringToStringMapEntryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
 
 /**
  * An AQL interpreter used for tests.
  *
  * @author sbegaudeau
  */
+
+@Service
 public class AQLInterpreter {
 
     /**
@@ -52,17 +59,36 @@ public class AQLInterpreter {
      */
     private static final String AQL_PREFIX = "aql:"; //$NON-NLS-1$
 
-    private final Logger logger = LoggerFactory.getLogger(AQLInterpreter.class);
+    private final Logger logger = LoggerFactory.getLogger(AQLInterpreterAPI.class);
+
+    private final Map<AQLEntry, Pair<LoadingCache<String, AstResult>, IQueryEnvironment>> elements;
+
+
+    public AQLInterpreter() {
+        elements = new HashMap<>();
+    }
+
+    private boolean isValidEPackage(EPackage ePackage) {
+        return ePackage != null && ePackage.getName() != null && ePackage.getNsURI() != null;
+    }
 
     /**
-     * The cache of the expressions parsed.
+     * Initializes the cache of the expressions.
      */
-    private LoadingCache<String, AstResult> parsedExpressions;
+    private LoadingCache<String, AstResult> initExpressionsCache(IQueryEnvironment queryEnvironment) {
 
-    /**
-     * The query environment.
-     */
-    private IQueryEnvironment queryEnvironment;
+        IQueryBuilderEngine builder = QueryParsing.newBuilder(queryEnvironment);
+        int maxCacheSize = 500;
+
+        return CacheBuilder.newBuilder().maximumSize(maxCacheSize).build(new CacheLoader<>() {
+            @Override
+            public AstResult load(String key) throws Exception {
+                return builder.build(key);
+            }
+
+        });
+    }
+
 
     /**
      * The constructor.
@@ -73,50 +99,50 @@ public class AQLInterpreter {
      *            Additional meta-models. A typical use case will be to register semantic meta-models so that reference
      *            to classes, such as <semanticMM>::<AClass>, can be interpreted.
      */
-    public AQLInterpreter(List<Class<?>> classes, List<EPackage> ePackages) {
-        this.queryEnvironment = Query.newEnvironmentWithDefaultServices(null);
-        this.queryEnvironment.registerEPackage(EcorePackage.eINSTANCE);
-        this.queryEnvironment.registerCustomClassMapping(EcorePackage.eINSTANCE.getEStringToStringMapEntry(), EStringToStringMapEntryImpl.class);
+    protected AQLEntry initializeUser(List<Class<?>> classes, List<EPackage> ePackages) {
+        // The cache of the expressions parsed.
+        LoadingCache<String, AstResult> parsedExpressions;
+        // The query environment.
+        IQueryEnvironment queryEnvironment;
+
+        queryEnvironment = Query.newEnvironmentWithDefaultServices(null);
+        queryEnvironment.registerEPackage(EcorePackage.eINSTANCE);
+        queryEnvironment.registerCustomClassMapping(EcorePackage.eINSTANCE.getEStringToStringMapEntry(), EStringToStringMapEntryImpl.class);
 
         for (Class<?> aClass : classes) {
-            Set<IService> services = ServiceUtils.getServices(this.queryEnvironment, aClass);
-            ServiceUtils.registerServices(this.queryEnvironment, services);
+            Set<IService> services = ServiceUtils.getServices(queryEnvironment, aClass);
+            ServiceUtils.registerServices(queryEnvironment, services);
         }
 
-        ePackages.stream().filter(this::isValidEPackage).forEach(this.queryEnvironment::registerEPackage);
+        ePackages.stream().filter(this::isValidEPackage).forEach(queryEnvironment::registerEPackage);
 
-        this.initExpressionsCache();
+        parsedExpressions = initExpressionsCache(queryEnvironment);
+
+        AQLEntry entry = new AQLEntry();
+
+        elements.put(entry, new Pair<>(parsedExpressions, queryEnvironment));
+
+        return entry;
+
     }
 
-    private boolean isValidEPackage(EPackage ePackage) {
-        return ePackage != null && ePackage.getName() != null && ePackage.getNsURI() != null;
-    }
 
-    /**
-     * Initializes the cache of the expressions.
-     */
-    private void initExpressionsCache() {
-        IQueryBuilderEngine builder = QueryParsing.newBuilder(this.queryEnvironment);
-        int maxCacheSize = 500;
 
-        this.parsedExpressions = CacheBuilder.newBuilder().maximumSize(maxCacheSize).build(new CacheLoader<String, AstResult>() {
-            @Override
-            public AstResult load(String key) throws Exception {
-                return builder.build(key);
-            }
+    protected Result evaluateExpression(Map<String, Object> variables, String expressionBody, AQLEntry entry) {
+        // The cache of the expressions parsed.
+        LoadingCache<String, AstResult> parsedExpressions = elements.get(entry).a;
+        // The query environment.
+        IQueryEnvironment queryEnvironment = elements.get(entry).b;
 
-        });
-    }
 
-    public Result evaluateExpression(Map<String, Object> variables, String expressionBody) {
         String expression = new ExpressionConverter().convertExpression(expressionBody);
         if (expression.startsWith(AQL_PREFIX)) {
             expression = expression.substring(AQL_PREFIX.length());
         }
 
         try {
-            AstResult build = this.parsedExpressions.get(expression);
-            IQueryEvaluationEngine evaluationEngine = QueryEvaluation.newEngine(this.queryEnvironment);
+            AstResult build = parsedExpressions.get(expression);
+            IQueryEvaluationEngine evaluationEngine = QueryEvaluation.newEngine(queryEnvironment);
             EvaluationResult evalResult = evaluationEngine.eval(build, variables);
 
             BasicDiagnostic diagnostic = new BasicDiagnostic();

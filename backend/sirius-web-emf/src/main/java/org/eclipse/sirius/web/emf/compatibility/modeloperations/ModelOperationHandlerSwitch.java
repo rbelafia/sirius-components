@@ -34,7 +34,8 @@ import org.eclipse.sirius.viewpoint.description.tool.Switch;
 import org.eclipse.sirius.viewpoint.description.tool.Unset;
 import org.eclipse.sirius.web.compat.api.IModelOperationHandler;
 import org.eclipse.sirius.web.emf.compatibility.EPackageService;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,13 +48,16 @@ public class ModelOperationHandlerSwitch implements Function<ModelOperation, Opt
 
     private final Logger logger = LoggerFactory.getLogger(ModelOperationHandlerSwitch.class);
 
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreter;
 
     private final ChildModelOperationHandler childModelOperationHandler;
 
-    public ModelOperationHandlerSwitch(AQLInterpreter interpreter) {
+    private final AQLEntry entry;
+
+    public ModelOperationHandlerSwitch(AQLInterpreterAPI interpreter, AQLEntry entry) {
         this.interpreter = Objects.requireNonNull(interpreter);
         this.childModelOperationHandler = new ChildModelOperationHandler();
+        this.entry = Objects.requireNonNull(entry);
     }
 
     @Override
@@ -98,11 +102,11 @@ public class ModelOperationHandlerSwitch implements Function<ModelOperation, Opt
     }
 
     private Optional<IModelOperationHandler> caseChangeContext(ChangeContext changeContextOperation) {
-        return Optional.of(new ChangeContextOperationHandler(this.interpreter, this.childModelOperationHandler, changeContextOperation));
+        return Optional.of(new ChangeContextOperationHandler(this.interpreter, this.childModelOperationHandler, changeContextOperation, entry));
     }
 
     private Optional<IModelOperationHandler> caseCreateInstance(CreateInstance createInstanceOperation) {
-        return Optional.of(new CreateInstanceOperationHandler(this.interpreter, new EPackageService(), this.childModelOperationHandler, createInstanceOperation));
+        return Optional.of(new CreateInstanceOperationHandler(this.interpreter, new EPackageService(), this.childModelOperationHandler, createInstanceOperation, entry));
     }
 
     private Optional<IModelOperationHandler> caseCreateView(CreateView createViewOperation) {
@@ -114,19 +118,19 @@ public class ModelOperationHandlerSwitch implements Function<ModelOperation, Opt
     }
 
     private Optional<IModelOperationHandler> caseFor(For forOperation) {
-        return Optional.of(new ForOperationHandler(this.interpreter, this.childModelOperationHandler, forOperation));
+        return Optional.of(new ForOperationHandler(this.interpreter, this.childModelOperationHandler, forOperation, entry));
     }
 
     private Optional<IModelOperationHandler> caseIf(If ifOperation) {
-        return Optional.of(new IfOperationHandler(this.interpreter, this.childModelOperationHandler, ifOperation));
+        return Optional.of(new IfOperationHandler(this.interpreter, this.childModelOperationHandler, ifOperation, entry));
     }
 
     private Optional<IModelOperationHandler> caseLet(Let letOperation) {
-        return Optional.of(new LetOperationHandler(this.interpreter, this.childModelOperationHandler, letOperation));
+        return Optional.of(new LetOperationHandler(this.interpreter, this.childModelOperationHandler, letOperation, entry));
     }
 
     private Optional<IModelOperationHandler> caseMoveElement(MoveElement moveElementOperation) {
-        return Optional.of(new MoveElementOperationHandler(this.interpreter, this.childModelOperationHandler, moveElementOperation));
+        return Optional.of(new MoveElementOperationHandler(this.interpreter, this.childModelOperationHandler, moveElementOperation, entry));
     }
 
     private Optional<IModelOperationHandler> caseNavigation(Navigation navigationOperation) {
@@ -134,7 +138,7 @@ public class ModelOperationHandlerSwitch implements Function<ModelOperation, Opt
     }
 
     private Optional<IModelOperationHandler> caseRemoveElement(RemoveElement removeElementOperation) {
-        return Optional.of(new RemoveElementOperationHandler(this.interpreter, this.childModelOperationHandler, removeElementOperation));
+        return Optional.of(new RemoveElementOperationHandler(this.interpreter, this.childModelOperationHandler, removeElementOperation, entry));
     }
 
     private Optional<IModelOperationHandler> caseSetObject(SetObject setObjectOperation) {
@@ -142,15 +146,15 @@ public class ModelOperationHandlerSwitch implements Function<ModelOperation, Opt
     }
 
     private Optional<IModelOperationHandler> caseSetValue(SetValue setValueOperation) {
-        return Optional.of(new SetValueOperationHandler(this.interpreter, this.childModelOperationHandler, setValueOperation));
+        return Optional.of(new SetValueOperationHandler(this.interpreter, this.childModelOperationHandler, setValueOperation, entry));
     }
 
     private Optional<IModelOperationHandler> caseUnset(Unset unsetOperation) {
-        return Optional.of(new UnsetOperationHandler(this.interpreter, this.childModelOperationHandler, unsetOperation));
+        return Optional.of(new UnsetOperationHandler(this.interpreter, this.childModelOperationHandler, unsetOperation, entry));
     }
 
     private Optional<IModelOperationHandler> caseSwitch(Switch switchOperation) {
-        return Optional.of(new SwitchOperationHandler(this.interpreter, this.childModelOperationHandler, switchOperation));
+        return Optional.of(new SwitchOperationHandler(this.interpreter, this.childModelOperationHandler, switchOperation, entry));
     }
 
 }

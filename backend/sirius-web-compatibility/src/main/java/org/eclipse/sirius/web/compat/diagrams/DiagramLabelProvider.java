@@ -18,7 +18,8 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import org.eclipse.sirius.web.diagrams.description.DiagramDescription;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.interpreter.Result;
 import org.eclipse.sirius.web.representations.VariableManager;
 
@@ -30,12 +31,15 @@ import org.eclipse.sirius.web.representations.VariableManager;
  */
 public class DiagramLabelProvider implements Function<VariableManager, String> {
 
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreter;
 
     private final String labelExpression;
 
-    public DiagramLabelProvider(AQLInterpreter interpreter, org.eclipse.sirius.diagram.description.DiagramDescription diagramDescription) {
+    private final AQLEntry entry;
+
+    public DiagramLabelProvider(AQLInterpreterAPI interpreter, org.eclipse.sirius.diagram.description.DiagramDescription diagramDescription, AQLEntry entry) {
         this.interpreter = Objects.requireNonNull(interpreter);
+        this.entry = entry;
 
         String titleExpression = diagramDescription.getTitleExpression();
         if (titleExpression.isBlank()) {
@@ -56,7 +60,7 @@ public class DiagramLabelProvider implements Function<VariableManager, String> {
         // @formatter:on
 
         return optionalLabel.orElseGet(() -> {
-            Result result = this.interpreter.evaluateExpression(variableManager.getVariables(), this.labelExpression);
+            Result result = this.interpreter.evaluateExpression(variableManager.getVariables(), this.labelExpression, entry);
             return result.asString().orElse(""); //$NON-NLS-1$
         });
     }

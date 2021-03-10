@@ -16,7 +16,8 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import org.eclipse.sirius.viewpoint.description.tool.ModelOperation;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 
 /**
  * Used to provide an instance of the model operation handler switch which will then be used to execute model
@@ -25,5 +26,5 @@ import org.eclipse.sirius.web.interpreter.AQLInterpreter;
  * @author sbegaudeau
  */
 public interface IModelOperationHandlerSwitchProvider {
-    Function<ModelOperation, Optional<IModelOperationHandler>> getModelOperationHandlerSwitch(AQLInterpreter interpreter);
+    Function<ModelOperation, Optional<IModelOperationHandler>> getModelOperationHandlerSwitch(AQLInterpreterAPI interpreter, AQLEntry aqlEntry);
 }

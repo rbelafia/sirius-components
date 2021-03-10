@@ -23,7 +23,9 @@ import org.eclipse.emf.ecore.ENamedElement;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.sirius.web.emf.compatibility.SemanticCandidatesProvider;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.VariableManager;
 import org.junit.Test;
 
@@ -35,11 +37,16 @@ import org.junit.Test;
 public class SemanticCandidatesProviderTestCases {
 
     private AQLInterpreter interpreter;
+    private AQLInterpreterAPI interpreterAPI;
+    private AQLEntry entry;
 
     public SemanticCandidatesProviderTestCases() {
         List<Class<?>> classes = new ArrayList<>();
         ArrayList<EPackage> ePackages = new ArrayList<>();
-        this.interpreter = new AQLInterpreter(classes, ePackages);
+        this.interpreter = new AQLInterpreter();
+        this.interpreterAPI = new AQLInterpreterAPI(this.interpreter);
+        this.entry = interpreterAPI.initializeUser(classes, ePackages);
+
     }
 
     /**
@@ -57,7 +64,7 @@ public class SemanticCandidatesProviderTestCases {
         String semanticCandidatesExpression = "aql:self.eClassifiers"; //$NON-NLS-1$
         String preconditionExpression = ""; //$NON-NLS-1$
 
-        SemanticCandidatesProvider semanticCandidatesProvider = new SemanticCandidatesProvider(this.interpreter, domainClass, semanticCandidatesExpression, preconditionExpression);
+        SemanticCandidatesProvider semanticCandidatesProvider = new SemanticCandidatesProvider(this.interpreterAPI, domainClass, semanticCandidatesExpression, preconditionExpression, this.entry);
 
         VariableManager variableManager = new VariableManager();
         variableManager.put(VariableManager.SELF, EcorePackage.eINSTANCE);
@@ -82,7 +89,7 @@ public class SemanticCandidatesProviderTestCases {
         String semanticCandidatesExpression = "aql:self.eClassifiers"; //$NON-NLS-1$
         String preconditionExpression = "aql:self.name.startsWith('EEnum')"; //$NON-NLS-1$
 
-        SemanticCandidatesProvider semanticCandidatesProvider = new SemanticCandidatesProvider(this.interpreter, domainClass, semanticCandidatesExpression, preconditionExpression);
+        SemanticCandidatesProvider semanticCandidatesProvider = new SemanticCandidatesProvider(this.interpreterAPI, domainClass, semanticCandidatesExpression, preconditionExpression, this.entry);
 
         VariableManager variableManager = new VariableManager();
         variableManager.put(VariableManager.SELF, EcorePackage.eINSTANCE);

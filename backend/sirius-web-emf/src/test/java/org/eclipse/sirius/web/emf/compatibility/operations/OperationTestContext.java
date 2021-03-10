@@ -20,7 +20,9 @@ import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.EcorePackage;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.VariableManager;
 
 /**
@@ -42,6 +44,10 @@ public class OperationTestContext {
 
     private AQLInterpreter interpreter;
 
+    private AQLInterpreterAPI interpreterAPI;
+
+    private AQLEntry entry;
+
     public OperationTestContext() {
         // initialize the semantic model
         this.rootPackage = EcoreFactory.eINSTANCE.createEPackage();
@@ -50,7 +56,9 @@ public class OperationTestContext {
         this.class1.setName(CLASS1_NAME);
         this.rootPackage.getEClassifiers().add(0, this.class1);
 
-        this.interpreter = new AQLInterpreter(List.of(ModelOperationServices.class), List.of(EcorePackage.eINSTANCE));
+        this.interpreter = new AQLInterpreter();
+        this.interpreterAPI = new AQLInterpreterAPI(interpreter);
+        this.entry = interpreterAPI.initializeUser(List.of(ModelOperationServices.class), List.of(EcorePackage.eINSTANCE));
 
         this.variables = new HashMap<>();
         this.variables.put(VariableManager.SELF, this.rootPackage);
@@ -68,7 +76,9 @@ public class OperationTestContext {
         return this.variables;
     }
 
-    public AQLInterpreter getInterpreter() {
-        return this.interpreter;
+    public AQLInterpreterAPI getInterpreter() {
+        return this.interpreterAPI;
     }
+
+    public AQLEntry getEntry() {return this.entry;}
 }

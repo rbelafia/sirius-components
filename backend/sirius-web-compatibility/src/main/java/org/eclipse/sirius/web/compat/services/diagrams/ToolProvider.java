@@ -52,7 +52,8 @@ import org.eclipse.sirius.web.diagrams.tools.CreateNodeTool;
 import org.eclipse.sirius.web.diagrams.tools.EdgeCandidate;
 import org.eclipse.sirius.web.diagrams.tools.ITool;
 import org.eclipse.sirius.web.diagrams.tools.ToolSection;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.Status;
 import org.eclipse.sirius.web.representations.VariableManager;
 import org.springframework.stereotype.Service;
@@ -73,12 +74,15 @@ public class ToolProvider implements IToolProvider {
 
     private final IToolImageProviderFactory toolImageProviderFactory;
 
+    private final AQLInterpreterAPI aqlInterpreterAPI;
+
     public ToolProvider(IIdentifierProvider identifierProvider, IAQLInterpreterFactory interpreterFactory, IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider,
-            IToolImageProviderFactory toolImageProviderFactory) {
+                        IToolImageProviderFactory toolImageProviderFactory, AQLInterpreterAPI aqlInterpreterAPI) {
         this.interpreterFactory = Objects.requireNonNull(interpreterFactory);
         this.identifierProvider = Objects.requireNonNull(identifierProvider);
         this.modelOperationHandlerSwitchProvider = Objects.requireNonNull(modelOperationHandlerSwitchProvider);
         this.toolImageProviderFactory = Objects.requireNonNull(toolImageProviderFactory);
+        this.aqlInterpreterAPI = Objects.requireNonNull(aqlInterpreterAPI);
     }
 
     @Override
@@ -93,12 +97,12 @@ public class ToolProvider implements IToolProvider {
             .map(org.eclipse.sirius.diagram.description.tool.ToolSection.class::cast)
             .collect(Collectors.toList());
         // @formatter:on
-        AQLInterpreter interpreter = this.interpreterFactory.create(siriusDiagramDescription);
+        AQLEntry entry = this.interpreterFactory.create(siriusDiagramDescription);
         for (var siriusToolSection : siriusToolSections) {
             // @formatter:off
             List<ITool> tools = this.getToolDescriptions(siriusToolSection).stream()
                     .filter(this::isSupported)
-                    .map(toolDescription -> this.convertTool(id2NodeDescriptions, siriusDiagramDescription, toolDescription, interpreter))
+                    .map(toolDescription -> this.convertTool(id2NodeDescriptions, siriusDiagramDescription, toolDescription, this.aqlInterpreterAPI, entry))
                     .flatMap(Optional::stream)
                     .collect(Collectors.toList());
             // @formatter:on
@@ -170,26 +174,26 @@ public class ToolProvider implements IToolProvider {
     }
 
     private Optional<ITool> convertTool(Map<UUID, NodeDescription> id2NodeDescriptions, org.eclipse.sirius.diagram.description.DiagramDescription siriusDiagramDescription,
-            AbstractToolDescription siriusTool, AQLInterpreter interpreter) {
+                                        AbstractToolDescription siriusTool, AQLInterpreterAPI interpreter, AQLEntry entry) {
         Optional<ITool> result = Optional.empty();
         if (siriusTool instanceof NodeCreationDescription) {
             NodeCreationDescription nodeCreationTool = (NodeCreationDescription) siriusTool;
-            result = Optional.of(this.convertNodeCreationDescription(id2NodeDescriptions, interpreter, nodeCreationTool));
+            result = Optional.of(this.convertNodeCreationDescription(id2NodeDescriptions, interpreter, entry, nodeCreationTool));
         } else if (siriusTool instanceof ContainerCreationDescription) {
             ContainerCreationDescription containerCreationDescription = (ContainerCreationDescription) siriusTool;
-            result = Optional.of(this.convertContainerCreationDescription(id2NodeDescriptions, interpreter, containerCreationDescription));
+            result = Optional.of(this.convertContainerCreationDescription(id2NodeDescriptions, interpreter, entry, containerCreationDescription));
         } else if (siriusTool instanceof org.eclipse.sirius.viewpoint.description.tool.ToolDescription) {
             org.eclipse.sirius.viewpoint.description.tool.ToolDescription toolDescription = (org.eclipse.sirius.viewpoint.description.tool.ToolDescription) siriusTool;
-            result = Optional.of(this.convertToolDescription(id2NodeDescriptions, interpreter, siriusDiagramDescription, toolDescription));
+            result = Optional.of(this.convertToolDescription(id2NodeDescriptions, interpreter, entry, siriusDiagramDescription, toolDescription));
         } else if (siriusTool instanceof EdgeCreationDescription) {
             EdgeCreationDescription edgeCreationDescription = (EdgeCreationDescription) siriusTool;
-            result = Optional.of(this.convertEdgeCreationDescription(id2NodeDescriptions, interpreter, edgeCreationDescription));
+            result = Optional.of(this.convertEdgeCreationDescription(id2NodeDescriptions, interpreter, entry, edgeCreationDescription));
         }
 
         return result;
     }
 
-    private CreateNodeTool convertNodeCreationDescription(Map<UUID, NodeDescription> id2NodeDescriptions, AQLInterpreter interpreter, NodeCreationDescription nodeCreationTool) {
+    private CreateNodeTool convertNodeCreationDescription(Map<UUID, NodeDescription> id2NodeDescriptions, AQLInterpreterAPI interpreter, AQLEntry entry, NodeCreationDescription nodeCreationTool) {
         String id = this.identifierProvider.getIdentifier(nodeCreationTool);
         String label = new IdentifiedElementQuery(nodeCreationTool).getLabel();
         String imagePath = this.toolImageProviderFactory.getToolImageProvider(nodeCreationTool).get();
@@ -198,14 +202,14 @@ public class ToolProvider implements IToolProvider {
         return CreateNodeTool.newCreateNodeTool(id)
                 .label(label)
                 .imageURL(imagePath)
-                .handler(this.createNodeCreationHandler(interpreter, nodeCreationTool))
+                .handler(this.createNodeCreationHandler(interpreter, entry, nodeCreationTool))
                 .targetDescriptions(targetDescriptions)
                 .appliesToDiagramRoot(this.atLeastOneRootMapping(nodeCreationTool.getNodeMappings()))
                 .build();
         // @formatter:on
     }
 
-    private CreateNodeTool convertContainerCreationDescription(Map<UUID, NodeDescription> id2NodeDescriptions, AQLInterpreter interpreter, ContainerCreationDescription containerCreationDescription) {
+    private CreateNodeTool convertContainerCreationDescription(Map<UUID, NodeDescription> id2NodeDescriptions, AQLInterpreterAPI interpreter, AQLEntry entry, ContainerCreationDescription containerCreationDescription) {
         String id = this.identifierProvider.getIdentifier(containerCreationDescription);
         String label = new IdentifiedElementQuery(containerCreationDescription).getLabel();
         String imagePath = this.toolImageProviderFactory.getToolImageProvider(containerCreationDescription).get();
@@ -214,15 +218,15 @@ public class ToolProvider implements IToolProvider {
         return CreateNodeTool.newCreateNodeTool(id)
                 .label(label)
                 .imageURL(imagePath)
-                .handler(this.createContainerCreationHandler(interpreter, containerCreationDescription))
+                .handler(this.createContainerCreationHandler(interpreter, entry, containerCreationDescription))
                 .targetDescriptions(targetDescriptions)
                 .appliesToDiagramRoot(this.atLeastOneRootMapping(containerCreationDescription.getContainerMappings()))
                 .build();
         // @formatter:on
     }
 
-    private CreateNodeTool convertToolDescription(Map<UUID, NodeDescription> id2NodeDescriptions, AQLInterpreter interpreter, DiagramDescription siriusDiagramDescription,
-            ToolDescription toolDescription) {
+    private CreateNodeTool convertToolDescription(Map<UUID, NodeDescription> id2NodeDescriptions, AQLInterpreterAPI interpreter, AQLEntry entry, DiagramDescription siriusDiagramDescription,
+                                                  ToolDescription toolDescription) {
         String id = this.identifierProvider.getIdentifier(toolDescription);
         String label = new IdentifiedElementQuery(toolDescription).getLabel();
         String imagePath = this.toolImageProviderFactory.getToolImageProvider(toolDescription).get();
@@ -240,7 +244,7 @@ public class ToolProvider implements IToolProvider {
         return CreateNodeTool.newCreateNodeTool(id)
                 .label(label)
                 .imageURL(imagePath)
-                .handler(this.createGenericToolHandler(interpreter, toolDescription))
+                .handler(this.createGenericToolHandler(interpreter, entry, toolDescription))
                 .targetDescriptions(targetDescriptions)
                 .appliesToDiagramRoot(true)
                 .build();
@@ -270,7 +274,7 @@ public class ToolProvider implements IToolProvider {
         return result;
     }
 
-    private CreateEdgeTool convertEdgeCreationDescription(Map<UUID, NodeDescription> id2NodeDescriptions, AQLInterpreter interpreter, EdgeCreationDescription edgeCreationDescription) {
+    private CreateEdgeTool convertEdgeCreationDescription(Map<UUID, NodeDescription> id2NodeDescriptions, AQLInterpreterAPI interpreter, AQLEntry entry, EdgeCreationDescription edgeCreationDescription) {
         String id = this.identifierProvider.getIdentifier(edgeCreationDescription);
         String label = new IdentifiedElementQuery(edgeCreationDescription).getLabel();
         String imagePath = this.toolImageProviderFactory.getToolImageProvider(edgeCreationDescription).get();
@@ -298,18 +302,18 @@ public class ToolProvider implements IToolProvider {
         return CreateEdgeTool.newCreateEdgeTool(id)
                 .label(label)
                 .imageURL(imagePath)
-                .handler(this.createEdgeCreationDescription(interpreter, edgeCreationDescription))
+                .handler(this.createEdgeCreationDescription(interpreter, entry, edgeCreationDescription))
                 .edgeCandidates(edgeCandidates)
                 .build();
         // @formatter:on
     }
 
-    private Function<VariableManager, Status> createContainerCreationHandler(AQLInterpreter interpreter, ContainerCreationDescription toolDescription) {
+    private Function<VariableManager, Status> createContainerCreationHandler(AQLInterpreterAPI interpreter, AQLEntry entry, ContainerCreationDescription toolDescription) {
         if (toolDescription != null) {
             InitialNodeCreationOperation initialOperation = toolDescription.getInitialOperation();
             return variableManager -> {
                 Map<String, Object> variables = variableManager.getVariables();
-                var modelOperationHandlerSwitch = this.modelOperationHandlerSwitchProvider.getModelOperationHandlerSwitch(interpreter);
+                var modelOperationHandlerSwitch = this.modelOperationHandlerSwitchProvider.getModelOperationHandlerSwitch(interpreter, entry);
                 return modelOperationHandlerSwitch.apply(initialOperation.getFirstModelOperations()).map(handler -> {
                     return handler.handle(variables);
                 }).orElse(Status.ERROR);
@@ -319,12 +323,12 @@ public class ToolProvider implements IToolProvider {
         }
     }
 
-    private Function<VariableManager, Status> createNodeCreationHandler(AQLInterpreter interpreter, NodeCreationDescription toolDescription) {
+    private Function<VariableManager, Status> createNodeCreationHandler(AQLInterpreterAPI interpreter, AQLEntry entry, NodeCreationDescription toolDescription) {
         if (toolDescription != null) {
             InitialNodeCreationOperation initialOperation = toolDescription.getInitialOperation();
             return variableManager -> {
                 Map<String, Object> variables = variableManager.getVariables();
-                var modelOperationHandlerSwitch = this.modelOperationHandlerSwitchProvider.getModelOperationHandlerSwitch(interpreter);
+                var modelOperationHandlerSwitch = this.modelOperationHandlerSwitchProvider.getModelOperationHandlerSwitch(interpreter, entry);
                 return modelOperationHandlerSwitch.apply(initialOperation.getFirstModelOperations()).map(handler -> {
                     return handler.handle(variables);
                 }).orElse(Status.ERROR);
@@ -334,12 +338,12 @@ public class ToolProvider implements IToolProvider {
         }
     }
 
-    private Function<VariableManager, Status> createGenericToolHandler(AQLInterpreter interpreter, org.eclipse.sirius.viewpoint.description.tool.ToolDescription toolDescription) {
+    private Function<VariableManager, Status> createGenericToolHandler(AQLInterpreterAPI interpreter, AQLEntry entry, org.eclipse.sirius.viewpoint.description.tool.ToolDescription toolDescription) {
         if (toolDescription != null) {
             InitialOperation initialOperation = toolDescription.getInitialOperation();
             return variableManager -> {
                 Map<String, Object> variables = variableManager.getVariables();
-                var modelOperationHandlerSwitch = this.modelOperationHandlerSwitchProvider.getModelOperationHandlerSwitch(interpreter);
+                var modelOperationHandlerSwitch = this.modelOperationHandlerSwitchProvider.getModelOperationHandlerSwitch(interpreter, entry);
                 return modelOperationHandlerSwitch.apply(initialOperation.getFirstModelOperations()).map(handler -> {
                     return handler.handle(variables);
                 }).orElse(Status.ERROR);
@@ -349,12 +353,12 @@ public class ToolProvider implements IToolProvider {
         }
     }
 
-    private Function<VariableManager, Status> createEdgeCreationDescription(AQLInterpreter interpreter, EdgeCreationDescription edgeCreationDescription) {
+    private Function<VariableManager, Status> createEdgeCreationDescription(AQLInterpreterAPI interpreter, AQLEntry entry, EdgeCreationDescription edgeCreationDescription) {
         if (edgeCreationDescription != null) {
             InitEdgeCreationOperation initialOperation = edgeCreationDescription.getInitialOperation();
             return variableManager -> {
                 Map<String, Object> variables = variableManager.getVariables();
-                var modelOperationHandlerSwitch = this.modelOperationHandlerSwitchProvider.getModelOperationHandlerSwitch(interpreter);
+                var modelOperationHandlerSwitch = this.modelOperationHandlerSwitchProvider.getModelOperationHandlerSwitch(interpreter, entry);
                 return modelOperationHandlerSwitch.apply(initialOperation.getFirstModelOperations()).map(handler -> {
                     return handler.handle(variables);
                 }).orElse(Status.ERROR);

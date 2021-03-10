@@ -20,7 +20,8 @@ import org.eclipse.sirius.diagram.description.style.EdgeStyleDescription;
 import org.eclipse.sirius.web.diagrams.ArrowStyle;
 import org.eclipse.sirius.web.diagrams.EdgeStyle;
 import org.eclipse.sirius.web.diagrams.LineStyle;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.VariableManager;
 
 /**
@@ -30,23 +31,26 @@ import org.eclipse.sirius.web.representations.VariableManager;
  */
 public class EdgeMappingStyleProvider implements Function<VariableManager, EdgeStyle> {
 
-    private AQLInterpreter interpreter;
+    private AQLInterpreterAPI interpreter;
 
     private EdgeMapping edgeMapping;
 
-    public EdgeMappingStyleProvider(AQLInterpreter interpreter, EdgeMapping edgeMapping) {
+    private final AQLEntry entry;
+
+    public EdgeMappingStyleProvider(AQLInterpreterAPI interpreter, EdgeMapping edgeMapping, AQLEntry entry) {
         this.interpreter = Objects.requireNonNull(interpreter);
         this.edgeMapping = Objects.requireNonNull(edgeMapping);
+        this.entry = entry;
     }
 
     @Override
     public EdgeStyle apply(VariableManager variableManager) {
-        EdgeStyleDescription edgeStyleDescription = new EdgeStyleDescriptionProvider(this.interpreter, this.edgeMapping).getEdgeStyleDescription(variableManager);
+        EdgeStyleDescription edgeStyleDescription = new EdgeStyleDescriptionProvider(this.interpreter, this.edgeMapping, entry).getEdgeStyleDescription(variableManager);
         return this.getEdgeStyle(variableManager, edgeStyleDescription);
     }
 
     private EdgeStyle getEdgeStyle(VariableManager variableManager, EdgeStyleDescription style) {
-        ColorDescriptionConverter colorDescriptionConverter = new ColorDescriptionConverter(this.interpreter, variableManager);
+        ColorDescriptionConverter colorDescriptionConverter = new ColorDescriptionConverter(this.interpreter, variableManager, this.entry);
         LineStyleConverter lineStyleConverter = new LineStyleConverter();
         ArrowStyleConverter arrowStyleConverter = new ArrowStyleConverter();
 

@@ -32,7 +32,8 @@ import org.eclipse.sirius.web.compat.api.IModelOperationHandler;
 import org.eclipse.sirius.web.core.api.IEditingContext;
 import org.eclipse.sirius.web.emf.compatibility.EPackageService;
 import org.eclipse.sirius.web.emf.services.EditingContext;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.Status;
 import org.eclipse.sirius.web.representations.VariableManager;
 import org.slf4j.Logger;
@@ -52,7 +53,7 @@ public class CreateInstanceOperationHandler implements IModelOperationHandler {
 
     private final Logger logger = LoggerFactory.getLogger(CreateInstanceOperationHandler.class);
 
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreter;
 
     private final EPackageService ePackageService;
 
@@ -60,11 +61,14 @@ public class CreateInstanceOperationHandler implements IModelOperationHandler {
 
     private final CreateInstance createInstance;
 
-    public CreateInstanceOperationHandler(AQLInterpreter interpreter, EPackageService ePackageService, ChildModelOperationHandler childModelOperationHandler, CreateInstance createInstance) {
+    private final AQLEntry entry;
+
+    public CreateInstanceOperationHandler(AQLInterpreterAPI interpreter, EPackageService ePackageService, ChildModelOperationHandler childModelOperationHandler, CreateInstance createInstance, AQLEntry entry) {
         this.interpreter = Objects.requireNonNull(interpreter);
         this.ePackageService = Objects.requireNonNull(ePackageService);
         this.childModelOperationHandler = Objects.requireNonNull(childModelOperationHandler);
         this.createInstance = Objects.requireNonNull(createInstance);
+        this.entry = entry;
     }
 
     @Override
@@ -120,6 +124,6 @@ public class CreateInstanceOperationHandler implements IModelOperationHandler {
         }
 
         List<ModelOperation> subModelOperations = this.createInstance.getSubModelOperations();
-        return this.childModelOperationHandler.handle(this.interpreter, childVariables, subModelOperations);
+        return this.childModelOperationHandler.handle(this.interpreter, childVariables, subModelOperations, this.entry);
     }
 }

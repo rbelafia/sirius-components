@@ -22,7 +22,8 @@ import org.eclipse.sirius.diagram.description.style.WorkspaceImageDescription;
 import org.eclipse.sirius.web.diagrams.INodeStyle;
 import org.eclipse.sirius.web.diagrams.LineStyle;
 import org.eclipse.sirius.web.diagrams.RectangularNodeStyle;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.interpreter.Result;
 import org.eclipse.sirius.web.representations.VariableManager;
 
@@ -33,18 +34,21 @@ import org.eclipse.sirius.web.representations.VariableManager;
  */
 public class NodeMappingStyleProvider implements Function<VariableManager, INodeStyle> {
 
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreter;
 
     private final NodeMapping nodeMapping;
 
-    public NodeMappingStyleProvider(AQLInterpreter interpreter, NodeMapping nodeMapping) {
+    private final AQLEntry entry;
+
+    public NodeMappingStyleProvider(AQLInterpreterAPI interpreter, NodeMapping nodeMapping, AQLEntry entry) {
         this.interpreter = Objects.requireNonNull(interpreter);
         this.nodeMapping = Objects.requireNonNull(nodeMapping);
+        this.entry = entry;
     }
 
     @Override
     public INodeStyle apply(VariableManager variableManager) {
-        NodeStyleDescription nodeStyleDescription = new NodeStyleDescriptionProvider(this.interpreter, this.nodeMapping).getNodeStyleDescription(variableManager);
+        NodeStyleDescription nodeStyleDescription = new NodeStyleDescriptionProvider(this.interpreter, this.nodeMapping, entry).getNodeStyleDescription(variableManager);
         return this.getNodeStyle(variableManager, nodeStyleDescription);
     }
 
@@ -56,7 +60,7 @@ public class NodeMappingStyleProvider implements Function<VariableManager, INode
             style = this.createRectangularNodeStyle(variableManager, squareDescription);
         } else if (nodeStyleDescription instanceof WorkspaceImageDescription) {
             WorkspaceImageDescription workspaceImageDescription = (WorkspaceImageDescription) nodeStyleDescription;
-            WorkspaceImageDescriptionConverter workspaceImageDescriptionConverter = new WorkspaceImageDescriptionConverter(this.interpreter, variableManager, workspaceImageDescription);
+            WorkspaceImageDescriptionConverter workspaceImageDescriptionConverter = new WorkspaceImageDescriptionConverter(this.interpreter, variableManager, workspaceImageDescription, entry);
             style = workspaceImageDescriptionConverter.convert();
         } else {
             // Fallback on Rectangular node style for now, until other styles are supported
@@ -76,15 +80,15 @@ public class NodeMappingStyleProvider implements Function<VariableManager, INode
     }
 
     private RectangularNodeStyle createRectangularNodeStyle(VariableManager variableManager, SquareDescription squareDescription) {
-        ColorDescriptionConverter colorProvider = new ColorDescriptionConverter(this.interpreter, variableManager);
-        ColorDescriptionConverter borderColorProvider = new ColorDescriptionConverter(this.interpreter, variableManager);
+        ColorDescriptionConverter colorProvider = new ColorDescriptionConverter(this.interpreter, variableManager, entry);
+        ColorDescriptionConverter borderColorProvider = new ColorDescriptionConverter(this.interpreter, variableManager, entry);
 
         String color = colorProvider.convert(squareDescription.getColor());
         String borderColor = borderColorProvider.convert(squareDescription.getBorderColor());
 
         LineStyle borderStyle = new LineStyleConverter().getStyle(squareDescription.getBorderLineStyle());
 
-        Result result = this.interpreter.evaluateExpression(variableManager.getVariables(), squareDescription.getBorderSizeComputationExpression());
+        Result result = this.interpreter.evaluateExpression(variableManager.getVariables(), squareDescription.getBorderSizeComputationExpression(), entry);
         int borderSize = result.asInt().getAsInt();
 
         // @formatter:off

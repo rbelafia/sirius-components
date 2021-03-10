@@ -19,8 +19,11 @@ import java.util.List;
 import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.sirius.diagram.description.DescriptionFactory;
 import org.eclipse.sirius.web.diagrams.description.DiagramDescription;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.VariableManager;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -29,11 +32,24 @@ import org.junit.Test;
  * @author sbegaudeau
  */
 public class DiagramLabelProviderTestCases {
+
+    private AQLInterpreter interpreter;
+
+    private AQLInterpreterAPI interpreterAPI;
+
+    private AQLEntry entry;
+
+    @Before
+    public void setUp() throws Exception {
+        interpreter = new AQLInterpreter();
+        interpreterAPI = new AQLInterpreterAPI(interpreter);
+        entry = interpreterAPI.initializeUser(List.of(), List.of(EcorePackage.eINSTANCE));
+    }
+
     @Test
     public void testUseDiagramNameFromUser() {
-        AQLInterpreter interpreter = new AQLInterpreter(List.of(), List.of(EcorePackage.eINSTANCE));
         org.eclipse.sirius.diagram.description.DiagramDescription diagramDescription = DescriptionFactory.eINSTANCE.createDiagramDescription();
-        DiagramLabelProvider labelProvider = new DiagramLabelProvider(interpreter, diagramDescription);
+        DiagramLabelProvider labelProvider = new DiagramLabelProvider(interpreterAPI, diagramDescription, entry);
 
         VariableManager variableManager = new VariableManager();
         String userProvidedDiagramName = "diagram name from the user"; //$NON-NLS-1$
@@ -45,11 +61,10 @@ public class DiagramLabelProviderTestCases {
 
     @Test
     public void testFallbackToTitleExpression() {
-        AQLInterpreter interpreter = new AQLInterpreter(List.of(), List.of(EcorePackage.eINSTANCE));
         org.eclipse.sirius.diagram.description.DiagramDescription diagramDescription = DescriptionFactory.eINSTANCE.createDiagramDescription();
         diagramDescription.setTitleExpression("aql:'NewLabel'"); //$NON-NLS-1$
 
-        DiagramLabelProvider labelProvider = new DiagramLabelProvider(interpreter, diagramDescription);
+        DiagramLabelProvider labelProvider = new DiagramLabelProvider(interpreterAPI, diagramDescription, entry);
 
         VariableManager variableManager = new VariableManager();
         String result = labelProvider.apply(variableManager);
@@ -59,10 +74,9 @@ public class DiagramLabelProviderTestCases {
 
     @Test
     public void testUseDefaultTitleExpressionWithLabel() {
-        AQLInterpreter interpreter = new AQLInterpreter(List.of(), List.of(EcorePackage.eINSTANCE));
         org.eclipse.sirius.diagram.description.DiagramDescription diagramDescription = DescriptionFactory.eINSTANCE.createDiagramDescription();
         diagramDescription.setLabel("DefaultLabel"); //$NON-NLS-1$
-        DiagramLabelProvider labelProvider = new DiagramLabelProvider(interpreter, diagramDescription);
+        DiagramLabelProvider labelProvider = new DiagramLabelProvider(interpreterAPI, diagramDescription, entry);
 
         VariableManager variableManager = new VariableManager();
         String result = labelProvider.apply(variableManager);
@@ -72,10 +86,9 @@ public class DiagramLabelProviderTestCases {
 
     @Test
     public void testUseDefaultTitleExpressionWithName() {
-        AQLInterpreter interpreter = new AQLInterpreter(List.of(), List.of(EcorePackage.eINSTANCE));
         org.eclipse.sirius.diagram.description.DiagramDescription diagramDescription = DescriptionFactory.eINSTANCE.createDiagramDescription();
         diagramDescription.setName("DefaultName"); //$NON-NLS-1$
-        DiagramLabelProvider labelProvider = new DiagramLabelProvider(interpreter, diagramDescription);
+        DiagramLabelProvider labelProvider = new DiagramLabelProvider(interpreterAPI, diagramDescription, entry);
 
         VariableManager variableManager = new VariableManager();
         String result = labelProvider.apply(variableManager);

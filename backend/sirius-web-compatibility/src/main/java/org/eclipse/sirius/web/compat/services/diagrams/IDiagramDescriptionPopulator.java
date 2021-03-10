@@ -13,7 +13,8 @@
 package org.eclipse.sirius.web.compat.services.diagrams;
 
 import org.eclipse.sirius.web.diagrams.description.DiagramDescription;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 
 /**
  * Used to populate a part of the diagram description builder.
@@ -21,5 +22,5 @@ import org.eclipse.sirius.web.interpreter.AQLInterpreter;
  * @author sbegaudeau
  */
 public interface IDiagramDescriptionPopulator {
-    DiagramDescription.Builder populate(DiagramDescription.Builder builder, org.eclipse.sirius.diagram.description.DiagramDescription siriusDiagramDescription, AQLInterpreter interpreter);
+    DiagramDescription.Builder populate(DiagramDescription.Builder builder, org.eclipse.sirius.diagram.description.DiagramDescription siriusDiagramDescription, AQLInterpreterAPI interpreter, AQLEntry entry);
 }

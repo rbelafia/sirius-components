@@ -26,7 +26,8 @@ import org.eclipse.sirius.web.components.Element;
 import org.eclipse.sirius.web.diagrams.description.DiagramDescription;
 import org.eclipse.sirius.web.diagrams.elements.NodeElementProps;
 import org.eclipse.sirius.web.diagrams.renderer.DiagramRenderingCache;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.interpreter.Result;
 import org.eclipse.sirius.web.representations.VariableManager;
 
@@ -39,14 +40,17 @@ public class TargetNodesProvider implements Function<VariableManager, List<Eleme
 
     private final EdgeMapping edgeMapping;
 
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreter;
 
     private final IIdentifierProvider identifierProvider;
 
-    public TargetNodesProvider(EdgeMapping edgeMapping, AQLInterpreter interpreter, IIdentifierProvider identifierProvider) {
+    private final AQLEntry entry;
+
+    public TargetNodesProvider(EdgeMapping edgeMapping, AQLInterpreterAPI interpreter, IIdentifierProvider identifierProvider, AQLEntry entry) {
         this.edgeMapping = Objects.requireNonNull(edgeMapping);
         this.interpreter = Objects.requireNonNull(interpreter);
         this.identifierProvider = Objects.requireNonNull(identifierProvider);
+        this.entry = entry;
     }
 
     @Override
@@ -60,7 +64,7 @@ public class TargetNodesProvider implements Function<VariableManager, List<Eleme
         DiagramRenderingCache cache = optionalCache.get();
 
         // @formatter:off
-        Result result = this.interpreter.evaluateExpression(variableManager.getVariables(), this.edgeMapping.getTargetFinderExpression());
+        Result result = this.interpreter.evaluateExpression(variableManager.getVariables(), this.edgeMapping.getTargetFinderExpression(), entry);
         return result.asObjects().orElse(List.of()).stream()
                 .flatMap(semanticObject-> cache.getObjectToNodes().getOrDefault(semanticObject, Collections.emptyList()).stream())
                 .filter(this.isFromCompatibleTargetMapping())

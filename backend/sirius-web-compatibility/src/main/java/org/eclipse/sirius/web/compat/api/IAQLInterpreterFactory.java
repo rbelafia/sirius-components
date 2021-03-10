@@ -14,7 +14,7 @@ package org.eclipse.sirius.web.compat.api;
 
 import org.eclipse.sirius.diagram.description.DiagramDescription;
 import org.eclipse.sirius.properties.ViewExtensionDescription;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 
 /**
  * Factory used to create instances of the AQL interpreter parameterized for a given representation. In Sirius RCP, a
@@ -24,7 +24,7 @@ import org.eclipse.sirius.web.interpreter.AQLInterpreter;
  * @author sbegaudeau
  */
 public interface IAQLInterpreterFactory {
-    AQLInterpreter create(DiagramDescription diagramDescription);
+    AQLEntry create(DiagramDescription diagramDescription);
 
-    AQLInterpreter create(ViewExtensionDescription viewExtensionDescription);
+    AQLEntry create(ViewExtensionDescription viewExtensionDescription);
 }

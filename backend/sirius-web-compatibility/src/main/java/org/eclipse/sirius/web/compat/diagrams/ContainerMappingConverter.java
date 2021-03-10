@@ -36,7 +36,8 @@ import org.eclipse.sirius.web.diagrams.NodeType;
 import org.eclipse.sirius.web.diagrams.description.LabelDescription;
 import org.eclipse.sirius.web.diagrams.description.LabelStyleDescription;
 import org.eclipse.sirius.web.diagrams.description.NodeDescription;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.representations.VariableManager;
 import org.eclipse.sirius.web.services.api.objects.IEditService;
 
@@ -51,7 +52,7 @@ public class ContainerMappingConverter {
 
     private final IEditService editService;
 
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreter;
 
     private final IIdentifierProvider identifierProvider;
 
@@ -61,19 +62,22 @@ public class ContainerMappingConverter {
 
     private final LabelStyleDescriptionConverter labelStyleDescriptionConverter;
 
-    public ContainerMappingConverter(IObjectService objectService, IEditService editService, AQLInterpreter interpreter, IIdentifierProvider identifierProvider,
-            ISemanticCandidatesProviderFactory semanticCandidatesProviderFactory, IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider) {
+    private final AQLEntry entry;
+
+    public ContainerMappingConverter(IObjectService objectService, IEditService editService, AQLInterpreterAPI interpreter, IIdentifierProvider identifierProvider,
+                                     ISemanticCandidatesProviderFactory semanticCandidatesProviderFactory, IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider, AQLEntry entry) {
         this.objectService = Objects.requireNonNull(objectService);
         this.editService = Objects.requireNonNull(editService);
         this.interpreter = Objects.requireNonNull(interpreter);
         this.identifierProvider = Objects.requireNonNull(identifierProvider);
         this.semanticCandidatesProviderFactory = Objects.requireNonNull(semanticCandidatesProviderFactory);
         this.modelOperationHandlerSwitchProvider = Objects.requireNonNull(modelOperationHandlerSwitchProvider);
-        this.labelStyleDescriptionConverter = new LabelStyleDescriptionConverter(this.interpreter, this.objectService);
+        this.entry = Objects.requireNonNull(entry);
+        this.labelStyleDescriptionConverter = new LabelStyleDescriptionConverter(this.interpreter, this.objectService, this.entry);
     }
 
     public NodeDescription convert(ContainerMapping containerMapping, Map<UUID, NodeDescription> id2NodeDescriptions) {
-        ContainerStyleDescriptionProvider containerStyleDescriptionProvider = new ContainerStyleDescriptionProvider(this.interpreter, containerMapping);
+        ContainerStyleDescriptionProvider containerStyleDescriptionProvider = new ContainerStyleDescriptionProvider(this.interpreter, containerMapping, entry);
 
         Function<VariableManager, LabelStyleDescription> labelStyleDescriptionProvider = variableManager -> {
             ContainerStyleDescription styleDescription = containerStyleDescriptionProvider.getContainerStyleDescription(variableManager);
@@ -84,7 +88,7 @@ public class ContainerMappingConverter {
         Function<VariableManager, String> labelExpressionProvider = variableManager -> {
             ContainerStyleDescription styleDescription = containerStyleDescriptionProvider.getContainerStyleDescription(variableManager);
             String labelExpression = Optional.ofNullable(styleDescription).map(ContainerStyleDescription::getLabelExpression).orElse(""); //$NON-NLS-1$
-            return new StringValueProvider(this.interpreter, labelExpression).apply(variableManager);
+            return new StringValueProvider(this.interpreter, labelExpression, entry).apply(variableManager);
         };
 
         Function<VariableManager, String> labelIdProvider = variableManager -> {
@@ -115,12 +119,12 @@ public class ContainerMappingConverter {
 
         List<NodeDescription> childNodeDescriptions = new ArrayList<>();
         // @formatter:off
-        NodeMappingConverter nodeMappingConverter = new NodeMappingConverter(this.objectService, this.editService, this.interpreter, this.identifierProvider, this.semanticCandidatesProviderFactory, this.modelOperationHandlerSwitchProvider);
+        NodeMappingConverter nodeMappingConverter = new NodeMappingConverter(this.objectService, this.editService, this.interpreter, this.identifierProvider, this.semanticCandidatesProviderFactory, this.modelOperationHandlerSwitchProvider, this.entry);
         List<NodeDescription> childNodeMappingDescriptions = containerMapping.getSubNodeMappings().stream()
                 .map(childNodeMapping -> nodeMappingConverter.convert(childNodeMapping, id2NodeDescriptions))
                 .collect(Collectors.toList());
 
-        ContainerMappingConverter containerMappingConverter = new ContainerMappingConverter(this.objectService, this.editService, this.interpreter, this.identifierProvider, this.semanticCandidatesProviderFactory, this.modelOperationHandlerSwitchProvider);
+        ContainerMappingConverter containerMappingConverter = new ContainerMappingConverter(this.objectService, this.editService, this.interpreter, this.identifierProvider, this.semanticCandidatesProviderFactory, this.modelOperationHandlerSwitchProvider, entry);
         List<NodeDescription> childContainerMappingDescriptions = containerMapping.getSubContainerMappings().stream()
                 .map(childContainerMapping -> containerMappingConverter.convert(childContainerMapping, id2NodeDescriptions))
                 .collect(Collectors.toList());
@@ -129,7 +133,7 @@ public class ContainerMappingConverter {
         childNodeDescriptions.addAll(childContainerMappingDescriptions);
 
         List<NodeDescription> borderNodeDescriptions = containerMapping.getBorderedNodeMappings().stream()
-                .map(borderNodeMapping -> new NodeMappingConverter(this.objectService, this.editService, this.interpreter, this.identifierProvider, this.semanticCandidatesProviderFactory, this.modelOperationHandlerSwitchProvider).convert(borderNodeMapping, id2NodeDescriptions))
+                .map(borderNodeMapping -> new NodeMappingConverter(this.objectService, this.editService, this.interpreter, this.identifierProvider, this.semanticCandidatesProviderFactory, this.modelOperationHandlerSwitchProvider, this.entry).convert(borderNodeMapping, id2NodeDescriptions))
                 .collect(Collectors.toList());
         // @formatter:on
 
@@ -137,10 +141,10 @@ public class ContainerMappingConverter {
         String semanticCandidatesExpression = containerMapping.getSemanticCandidatesExpression();
         String preconditionExpression = containerMapping.getPreconditionExpression();
         Function<VariableManager, List<Object>> semanticElementsProvider = this.semanticCandidatesProviderFactory.getSemanticCandidatesProvider(this.interpreter, domainClass,
-                semanticCandidatesExpression, preconditionExpression);
-        Function<VariableManager, INodeStyle> styleProvider = new ContainerMappingStyleProvider(this.interpreter, containerMapping);
+                semanticCandidatesExpression, preconditionExpression, entry);
+        Function<VariableManager, INodeStyle> styleProvider = new ContainerMappingStyleProvider(this.interpreter, containerMapping, entry);
 
-        ToolConverter toolConverter = new ToolConverter(this.interpreter, this.editService, this.modelOperationHandlerSwitchProvider);
+        ToolConverter toolConverter = new ToolConverter(this.interpreter, this.editService, this.modelOperationHandlerSwitchProvider, entry);
         var deleteHandler = toolConverter.createDeleteToolHandler(containerMapping.getDeletionDescription());
         var labelEditHandler = toolConverter.createDirectEditToolHandler(containerMapping.getLabelDirectEdit());
 

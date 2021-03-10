@@ -16,7 +16,8 @@ import java.util.Objects;
 
 import org.eclipse.sirius.web.compat.services.representations.IdentifiedElementLabelProvider;
 import org.eclipse.sirius.web.diagrams.description.DiagramDescription.Builder;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.springframework.stereotype.Service;
 
 /**
@@ -34,7 +35,7 @@ public class DiagramDescriptionLabelPopulator implements IDiagramDescriptionPopu
     }
 
     @Override
-    public Builder populate(Builder builder, org.eclipse.sirius.diagram.description.DiagramDescription siriusDiagramDescription, AQLInterpreter interpreter) {
+    public Builder populate(Builder builder, org.eclipse.sirius.diagram.description.DiagramDescription siriusDiagramDescription, AQLInterpreterAPI interpreter, AQLEntry entry) {
         return builder.label(this.identifiedElementLabelProvider.getLabel(siriusDiagramDescription));
     }
 }

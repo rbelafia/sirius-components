@@ -25,7 +25,8 @@ import org.eclipse.sirius.web.compat.diagrams.DiagramLabelProvider;
 import org.eclipse.sirius.web.compat.services.diagrams.api.IDiagramDescriptionConverter;
 import org.eclipse.sirius.web.diagrams.description.DiagramDescription;
 import org.eclipse.sirius.web.diagrams.description.DiagramDescription.Builder;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.VariableManager;
 import org.springframework.stereotype.Service;
 
@@ -41,23 +42,26 @@ public class DiagramDescriptionConverter implements IDiagramDescriptionConverter
 
     private final IAQLInterpreterFactory interpreterFactory;
 
+    private final AQLInterpreterAPI interpreterAPI;
+
     private final IIdentifierProvider identifierProvider;
 
     private final ICanCreateDiagramPredicateFactory canCreateDiagramPredicateFactory;
 
-    public DiagramDescriptionConverter(List<IDiagramDescriptionPopulator> diagramDescriptionPopulators, IAQLInterpreterFactory interpreterFactory, IIdentifierProvider identifierProvider,
-            ICanCreateDiagramPredicateFactory canCreateDiagramPredicateFactory) {
+    public DiagramDescriptionConverter(List<IDiagramDescriptionPopulator> diagramDescriptionPopulators, IAQLInterpreterFactory interpreterFactory, AQLInterpreterAPI interpreterAPI, IIdentifierProvider identifierProvider,
+                                       ICanCreateDiagramPredicateFactory canCreateDiagramPredicateFactory) {
         this.diagramDescriptionPopulators = Objects.requireNonNull(diagramDescriptionPopulators);
         this.interpreterFactory = Objects.requireNonNull(interpreterFactory);
+        this.interpreterAPI = interpreterAPI;
         this.identifierProvider = Objects.requireNonNull(identifierProvider);
         this.canCreateDiagramPredicateFactory = Objects.requireNonNull(canCreateDiagramPredicateFactory);
     }
 
     @Override
     public DiagramDescription convert(org.eclipse.sirius.diagram.description.DiagramDescription siriusDiagramDescription) {
-        AQLInterpreter interpreter = this.interpreterFactory.create(siriusDiagramDescription);
-        Function<VariableManager, String> labelProvider = new DiagramLabelProvider(interpreter, siriusDiagramDescription);
-        Predicate<VariableManager> canCreatePredicate = this.canCreateDiagramPredicateFactory.getCanCreateDiagramPredicate(siriusDiagramDescription, interpreter);
+        AQLEntry entry = this.interpreterFactory.create(siriusDiagramDescription);
+        Function<VariableManager, String> labelProvider = new DiagramLabelProvider(interpreterAPI, siriusDiagramDescription, entry);
+        Predicate<VariableManager> canCreatePredicate = this.canCreateDiagramPredicateFactory.getCanCreateDiagramPredicate(siriusDiagramDescription, interpreterAPI, entry);
 
         // @formatter:off
         Builder builder = DiagramDescription.newDiagramDescription(UUID.fromString(this.identifierProvider.getIdentifier(siriusDiagramDescription)))
@@ -66,7 +70,7 @@ public class DiagramDescriptionConverter implements IDiagramDescriptionConverter
         // @formatter:on
 
         for (IDiagramDescriptionPopulator diagramDescriptionPopulator : this.diagramDescriptionPopulators) {
-            diagramDescriptionPopulator.populate(builder, siriusDiagramDescription, interpreter);
+            diagramDescriptionPopulator.populate(builder, siriusDiagramDescription, interpreterAPI, entry);
         }
 
         return builder.build();

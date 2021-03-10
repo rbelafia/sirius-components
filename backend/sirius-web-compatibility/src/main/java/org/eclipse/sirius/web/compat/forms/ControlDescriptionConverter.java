@@ -22,7 +22,8 @@ import org.eclipse.sirius.web.compat.api.IIdentifierProvider;
 import org.eclipse.sirius.web.compat.api.IModelOperationHandlerSwitchProvider;
 import org.eclipse.sirius.web.core.api.IObjectService;
 import org.eclipse.sirius.web.forms.description.AbstractControlDescription;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +36,7 @@ public class ControlDescriptionConverter {
 
     private final Logger logger = LoggerFactory.getLogger(ControlDescriptionConverter.class);
 
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreter;
 
     private final IObjectService objectService;
 
@@ -43,12 +44,15 @@ public class ControlDescriptionConverter {
 
     private final IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider;
 
-    public ControlDescriptionConverter(AQLInterpreter interpreter, IObjectService objectService, IIdentifierProvider identifierProvider,
-            IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider) {
+    private final AQLEntry entry;
+
+    public ControlDescriptionConverter(AQLInterpreterAPI interpreter, IObjectService objectService, IIdentifierProvider identifierProvider,
+                                       IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider, AQLEntry entry) {
         this.interpreter = Objects.requireNonNull(interpreter);
         this.objectService = Objects.requireNonNull(objectService);
         this.identifierProvider = Objects.requireNonNull(identifierProvider);
         this.modelOperationHandlerSwitchProvider = Objects.requireNonNull(modelOperationHandlerSwitchProvider);
+        this.entry = entry;
     }
 
     public Optional<AbstractControlDescription> convert(ControlDescription controlDescription) {
@@ -64,12 +68,12 @@ public class ControlDescriptionConverter {
     }
 
     private Optional<AbstractControlDescription> convertWidget(WidgetDescription controlDescription) {
-        return new WidgetDescriptionConverter(this.interpreter, this.objectService, this.identifierProvider, this.modelOperationHandlerSwitchProvider).convert(controlDescription)
+        return new WidgetDescriptionConverter(this.interpreter, this.objectService, this.identifierProvider, this.modelOperationHandlerSwitchProvider, entry).convert(controlDescription)
                 .map(AbstractControlDescription.class::cast);
     }
 
     private Optional<AbstractControlDescription> convertFor(DynamicMappingForDescription forDescription) {
-        return Optional.of(new ForDescriptionConverter(this.interpreter, this.objectService, this.identifierProvider, this.modelOperationHandlerSwitchProvider).convert(forDescription));
+        return Optional.of(new ForDescriptionConverter(this.interpreter, this.objectService, this.identifierProvider, this.modelOperationHandlerSwitchProvider, entry).convert(forDescription));
     }
 
 }

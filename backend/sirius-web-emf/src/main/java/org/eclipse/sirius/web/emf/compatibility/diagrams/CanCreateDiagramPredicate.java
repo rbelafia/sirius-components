@@ -20,7 +20,8 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.sirius.diagram.description.DiagramDescription;
 import org.eclipse.sirius.web.emf.compatibility.DomainClassPredicate;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.interpreter.Result;
 import org.eclipse.sirius.web.representations.IRepresentationDescription;
 import org.eclipse.sirius.web.representations.VariableManager;
@@ -34,11 +35,14 @@ public class CanCreateDiagramPredicate implements Predicate<VariableManager> {
 
     private final DiagramDescription diagramDescription;
 
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreter;
 
-    public CanCreateDiagramPredicate(DiagramDescription diagramDescription, AQLInterpreter interpreter) {
+    private final AQLEntry entry;
+
+    public CanCreateDiagramPredicate(DiagramDescription diagramDescription, AQLInterpreterAPI interpreter, AQLEntry entry) {
         this.diagramDescription = diagramDescription;
         this.interpreter = interpreter;
+        this.entry = entry;
     }
 
     @Override
@@ -58,7 +62,7 @@ public class CanCreateDiagramPredicate implements Predicate<VariableManager> {
         if (optionalEObject.isPresent()) {
             String preconditionExpression = this.diagramDescription.getPreconditionExpression();
             if (preconditionExpression != null && !preconditionExpression.isBlank()) {
-                Result preconditionResult = this.interpreter.evaluateExpression(variableManager.getVariables(), preconditionExpression);
+                Result preconditionResult = this.interpreter.evaluateExpression(variableManager.getVariables(), preconditionExpression, entry);
                 result = preconditionResult.asBoolean().orElse(false);
             } else {
                 result = true;

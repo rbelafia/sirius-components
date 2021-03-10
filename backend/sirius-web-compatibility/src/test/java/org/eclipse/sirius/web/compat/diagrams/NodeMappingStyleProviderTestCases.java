@@ -27,8 +27,11 @@ import org.eclipse.sirius.diagram.description.style.StyleFactory;
 import org.eclipse.sirius.viewpoint.description.FixedColor;
 import org.eclipse.sirius.web.diagrams.INodeStyle;
 import org.eclipse.sirius.web.diagrams.RectangularNodeStyle;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.VariableManager;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -41,6 +44,19 @@ public class NodeMappingStyleProviderTestCases {
     private static final String EXPRESSION_FALSE = "aql:false"; //$NON-NLS-1$
 
     private static final String EXPRESSION_TRUE = "aql:true"; //$NON-NLS-1$
+
+    private AQLInterpreter interpreter;
+
+    private AQLInterpreterAPI interpreterAPI;
+
+    private AQLEntry aqlEntry;
+
+    @Before
+    public void setUp() throws Exception {
+        interpreter = new AQLInterpreter();
+        interpreterAPI = new AQLInterpreterAPI(interpreter);
+        aqlEntry = interpreterAPI.initializeUser(List.of(), List.of(EcorePackage.eINSTANCE));
+    }
 
     /**
      * Non-regression test for Conditional styles issue on nodes.
@@ -59,8 +75,7 @@ public class NodeMappingStyleProviderTestCases {
         nodeMapping.getConditionnalStyles().add(this.createConditionalStyle(EXPRESSION_TRUE, this.createSquareStyle(3, 3, 3)));
 
         VariableManager variableManager = new VariableManager();
-        AQLInterpreter interpreter = new AQLInterpreter(List.of(), List.of(EcorePackage.eINSTANCE));
-        INodeStyle nodeStyle = new NodeMappingStyleProvider(interpreter, nodeMapping).apply(variableManager);
+        INodeStyle nodeStyle = new NodeMappingStyleProvider(interpreterAPI, nodeMapping, aqlEntry).apply(variableManager);
 
         assertThat(nodeStyle).isInstanceOf(RectangularNodeStyle.class);
         RectangularNodeStyle rectangularNodeStyle = (RectangularNodeStyle) nodeStyle;
@@ -102,8 +117,7 @@ public class NodeMappingStyleProviderTestCases {
             nodeMapping.setStyle(style);
 
             VariableManager variableManager = new VariableManager();
-            AQLInterpreter interpreter = new AQLInterpreter(List.of(), List.of(EcorePackage.eINSTANCE));
-            INodeStyle nodeStyle = new NodeMappingStyleProvider(interpreter, nodeMapping).apply(variableManager);
+            INodeStyle nodeStyle = new NodeMappingStyleProvider(interpreterAPI, nodeMapping, aqlEntry).apply(variableManager);
             assertThat(nodeStyle).isInstanceOf(RectangularNodeStyle.class);
             RectangularNodeStyle rectangularNodeStyle = (RectangularNodeStyle) nodeStyle;
             assertThat(rectangularNodeStyle.getBorderStyle()).isEqualTo(entry.getValue());

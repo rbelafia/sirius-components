@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.antlr.v4.runtime.misc.Pair;
+import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.sirius.diagram.description.ContainerMapping;
 import org.eclipse.sirius.diagram.description.DescriptionFactory;
 import org.eclipse.sirius.diagram.description.EdgeMapping;
@@ -32,8 +34,11 @@ import org.eclipse.sirius.web.diagrams.description.LabelStyleDescription;
 import org.eclipse.sirius.web.diagrams.description.NodeDescription;
 import org.eclipse.sirius.web.emf.compatibility.SemanticCandidatesProvider;
 import org.eclipse.sirius.web.emf.compatibility.modeloperations.ModelOperationHandlerSwitch;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.Status;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -70,7 +75,16 @@ public class EdgeMappingConverterTestCases {
         IIdentifierProvider identifierProvider = element -> containerMappingUUID.toString();
         ISemanticCandidatesProviderFactory semanticCandidatesProviderFactory = SemanticCandidatesProvider::new;
         IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider = ModelOperationHandlerSwitch::new;
-        EdgeMappingConverter edgeMappingConverter = new EdgeMappingConverter(new NoOpObjectService(), new NoOpEditService(), new AQLInterpreter(List.of(), List.of()), identifierProvider,
+
+        AQLInterpreter interpreter;
+        AQLInterpreterAPI interpreterAPI;
+        AQLEntry entry;
+
+        interpreter = new AQLInterpreter();
+        interpreterAPI = new AQLInterpreterAPI(interpreter);
+        entry = interpreterAPI.initializeUser(List.of(), List.of(EcorePackage.eINSTANCE));
+
+        EdgeMappingConverter edgeMappingConverter = new EdgeMappingConverter(new NoOpObjectService(), new NoOpEditService(), new Pair<>(interpreterAPI, entry), identifierProvider,
                 semanticCandidatesProviderFactory, modelOperationHandlerSwitchProvider, id2NodeDescriptions);
 
         EdgeDescription edgeDescription = edgeMappingConverter.convert(edgeMapping);
@@ -136,7 +150,16 @@ public class EdgeMappingConverterTestCases {
         IIdentifierProvider identifierProvider = element -> containerMappingUUID.toString();
         ISemanticCandidatesProviderFactory semanticCandidatesProviderFactory = SemanticCandidatesProvider::new;
         IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider = ModelOperationHandlerSwitch::new;
-        EdgeMappingConverter edgeMappingConverter = new EdgeMappingConverter(new NoOpObjectService(), new NoOpEditService(), new AQLInterpreter(List.of(), List.of()), identifierProvider,
+
+        AQLInterpreter interpreter;
+        AQLInterpreterAPI interpreterAPI;
+        AQLEntry entry;
+
+        interpreter = new AQLInterpreter();
+        interpreterAPI = new AQLInterpreterAPI(interpreter);
+        entry = interpreterAPI.initializeUser(List.of(), List.of(EcorePackage.eINSTANCE));
+
+        EdgeMappingConverter edgeMappingConverter = new EdgeMappingConverter(new NoOpObjectService(), new NoOpEditService(), new Pair<>(interpreterAPI, entry), identifierProvider,
                 semanticCandidatesProviderFactory, modelOperationHandlerSwitchProvider, id2NodeDescriptions);
 
         EdgeDescription edgeDescription = edgeMappingConverter.convert(edgeMapping);
@@ -168,7 +191,16 @@ public class EdgeMappingConverterTestCases {
         IIdentifierProvider identifierProvider = element -> targetContainerMappingUUID.toString();
         ISemanticCandidatesProviderFactory semanticCandidatesProviderFactory = SemanticCandidatesProvider::new;
         IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider = ModelOperationHandlerSwitch::new;
-        EdgeMappingConverter edgeMappingConverter = new EdgeMappingConverter(new NoOpObjectService(), new NoOpEditService(), new AQLInterpreter(List.of(), List.of()), identifierProvider,
+
+        AQLInterpreter interpreter;
+        AQLInterpreterAPI interpreterAPI;
+        AQLEntry entry;
+
+        interpreter = new AQLInterpreter();
+        interpreterAPI = new AQLInterpreterAPI(interpreter);
+        entry = interpreterAPI.initializeUser(List.of(), List.of(EcorePackage.eINSTANCE));
+
+        EdgeMappingConverter edgeMappingConverter = new EdgeMappingConverter(new NoOpObjectService(), new NoOpEditService(), new Pair<>(interpreterAPI, entry), identifierProvider,
                 semanticCandidatesProviderFactory, modelOperationHandlerSwitchProvider, id2NodeDescriptions);
 
         EdgeDescription edgeDescription = edgeMappingConverter.convert(edgeMapping);

@@ -20,8 +20,11 @@ import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.sirius.diagram.description.style.StyleFactory;
 import org.eclipse.sirius.diagram.description.style.WorkspaceImageDescription;
 import org.eclipse.sirius.web.diagrams.ImageNodeStyle;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.VariableManager;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -33,6 +36,19 @@ public class WorkspaceImageDescriptionConverterTestCases {
 
     private static final String WORKSPACE_IMAGE_PATH = "/org.eclipse.sirius.web.diagrams/path"; //$NON-NLS-1$
 
+    private AQLInterpreter interpreter;
+
+    private AQLInterpreterAPI interpreterAPI;
+
+    private AQLEntry entry;
+
+    @Before
+    public void setUp() throws Exception {
+        interpreter = new AQLInterpreter();
+        interpreterAPI = new AQLInterpreterAPI(interpreter);
+        entry = interpreterAPI.initializeUser(List.of(), List.of(EcorePackage.eINSTANCE));
+    }
+
     /**
      * Test the default value of the scalingFactor according to an unset sizeComputationExpression. <br/>
      * <br/>
@@ -40,18 +56,18 @@ public class WorkspaceImageDescriptionConverterTestCases {
      *
      * @see org.eclipse.sirius.diagram.description.style.impl.NodeStyleDescriptionImpl.SIZE_COMPUTATION_EXPRESSION_EDEFAULT
      */
+
+
     @Test
     public void testDefaultScalingFactor() {
         int defaultSizeComputation = 3;
-
-        AQLInterpreter interpreter = new AQLInterpreter(List.of(), List.of(EcorePackage.eINSTANCE));
 
         VariableManager variableManager = new VariableManager();
 
         WorkspaceImageDescription workspaceImageDescription = StyleFactory.eINSTANCE.createWorkspaceImageDescription();
         workspaceImageDescription.setWorkspacePath(WORKSPACE_IMAGE_PATH);
 
-        ImageNodeStyle imageNodeStyle = new WorkspaceImageDescriptionConverter(interpreter, variableManager, workspaceImageDescription).convert();
+        ImageNodeStyle imageNodeStyle = new WorkspaceImageDescriptionConverter(interpreterAPI, variableManager, workspaceImageDescription, entry).convert();
         assertThat(imageNodeStyle.getScalingFactor()).isEqualTo(defaultSizeComputation);
     }
 
@@ -67,7 +83,6 @@ public class WorkspaceImageDescriptionConverterTestCases {
     @Test
     public void testBasicScalingFactorExp10() {
         int expectedSize = 10;
-        AQLInterpreter interpreter = new AQLInterpreter(List.of(), List.of(EcorePackage.eINSTANCE));
 
         VariableManager variableManager = new VariableManager();
 
@@ -75,7 +90,7 @@ public class WorkspaceImageDescriptionConverterTestCases {
         workspaceImageDescription.setWorkspacePath(WORKSPACE_IMAGE_PATH);
         workspaceImageDescription.setSizeComputationExpression("aql:" + expectedSize); //$NON-NLS-1$
 
-        ImageNodeStyle imageNodeStyle = new WorkspaceImageDescriptionConverter(interpreter, variableManager, workspaceImageDescription).convert();
+        ImageNodeStyle imageNodeStyle = new WorkspaceImageDescriptionConverter(interpreterAPI, variableManager, workspaceImageDescription, entry).convert();
         assertThat(imageNodeStyle.getScalingFactor()).isEqualTo(expectedSize);
     }
 }

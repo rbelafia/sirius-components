@@ -17,7 +17,8 @@ import java.util.Objects;
 import org.eclipse.sirius.diagram.description.style.WorkspaceImageDescription;
 import org.eclipse.sirius.viewpoint.description.EAttributeCustomization;
 import org.eclipse.sirius.web.diagrams.ImageNodeStyle;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.interpreter.Result;
 import org.eclipse.sirius.web.representations.VariableManager;
 
@@ -32,7 +33,7 @@ public class WorkspaceImageDescriptionConverter {
 
     private static final int DEFAULT_SCALING_FACTOR = 1;
 
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreterAPI;
 
     private final VariableManager variableManager;
 
@@ -40,11 +41,14 @@ public class WorkspaceImageDescriptionConverter {
 
     private final EAttributeCustomizationProvider eAttributeCustomizationProvider;
 
-    public WorkspaceImageDescriptionConverter(AQLInterpreter interpreter, VariableManager variableManager, WorkspaceImageDescription workspaceImageDescription) {
-        this.interpreter = Objects.requireNonNull(interpreter);
+    private final AQLEntry entry;
+
+    public WorkspaceImageDescriptionConverter(AQLInterpreterAPI interpreterAPI, VariableManager variableManager, WorkspaceImageDescription workspaceImageDescription, AQLEntry entry) {
+        this.interpreterAPI = Objects.requireNonNull(interpreterAPI);
         this.variableManager = Objects.requireNonNull(variableManager);
         this.workspaceImageDescription = Objects.requireNonNull(workspaceImageDescription);
-        this.eAttributeCustomizationProvider = new EAttributeCustomizationProvider(interpreter, variableManager);
+        this.entry = Objects.requireNonNull(entry);
+        this.eAttributeCustomizationProvider = new EAttributeCustomizationProvider(interpreterAPI, variableManager, entry);
     }
 
     public ImageNodeStyle convert() {
@@ -54,7 +58,7 @@ public class WorkspaceImageDescriptionConverter {
                 .orElse(this.workspaceImageDescription.getWorkspacePath());
         // @formatter:on
 
-        Result scalingFactorResult = this.interpreter.evaluateExpression(this.variableManager.getVariables(), this.workspaceImageDescription.getSizeComputationExpression());
+        Result scalingFactorResult = this.interpreterAPI.evaluateExpression(this.variableManager.getVariables(), this.workspaceImageDescription.getSizeComputationExpression(), this.entry);
         int scalingFactor = scalingFactorResult.asInt().orElse(DEFAULT_SCALING_FACTOR);
 
         // @formatter:off

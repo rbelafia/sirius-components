@@ -15,7 +15,8 @@ package org.eclipse.sirius.web.compat.utils;
 import java.util.Objects;
 import java.util.function.Function;
 
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.interpreter.Result;
 import org.eclipse.sirius.web.representations.VariableManager;
 
@@ -25,19 +26,22 @@ import org.eclipse.sirius.web.representations.VariableManager;
  * @author fbarbin
  */
 public class BooleanValueProvider implements Function<VariableManager, Boolean> {
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreter;
 
     private final String expression;
 
-    public BooleanValueProvider(AQLInterpreter interpreter, String expression) {
+    private final AQLEntry entry;
+
+    public BooleanValueProvider(AQLInterpreterAPI interpreter, String expression, AQLEntry entry) {
         this.interpreter = Objects.requireNonNull(interpreter);
         this.expression = Objects.requireNonNull(expression);
+        this.entry = entry;
     }
 
     @Override
     public Boolean apply(VariableManager variableManager) {
         if (!this.expression.isBlank()) {
-            Result result = this.interpreter.evaluateExpression(variableManager.getVariables(), this.expression);
+            Result result = this.interpreter.evaluateExpression(variableManager.getVariables(), this.expression, entry);
             return result.asBoolean().orElse(Boolean.FALSE);
         }
         return Boolean.FALSE;

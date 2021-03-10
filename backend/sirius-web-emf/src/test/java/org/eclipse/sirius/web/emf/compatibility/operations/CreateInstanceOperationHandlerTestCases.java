@@ -78,7 +78,7 @@ public class CreateInstanceOperationHandlerTestCases {
 
         this.createInstanceOperation = ToolFactory.eINSTANCE.createCreateInstance();
         this.createInstanceOperationHandler = new CreateInstanceOperationHandler(this.operationTestContext.getInterpreter(), new EPackageService(), new ChildModelOperationHandler(),
-                this.createInstanceOperation);
+                this.createInstanceOperation, this.operationTestContext.getEntry());
     }
 
     @Test

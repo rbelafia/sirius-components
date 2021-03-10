@@ -60,7 +60,7 @@ public class UnsetOperationHandlerTestCases {
         this.operationTestContext.getRootPackage().setEFactoryInstance(EcoreFactory.eINSTANCE.createEFactory());
 
         this.unset = ToolFactory.eINSTANCE.createUnset();
-        this.unsetOperationHandler = new UnsetOperationHandler(this.operationTestContext.getInterpreter(), new ChildModelOperationHandler(), this.unset);
+        this.unsetOperationHandler = new UnsetOperationHandler(this.operationTestContext.getInterpreter(), new ChildModelOperationHandler(), this.unset, this.operationTestContext.getEntry());
     }
 
     @Test

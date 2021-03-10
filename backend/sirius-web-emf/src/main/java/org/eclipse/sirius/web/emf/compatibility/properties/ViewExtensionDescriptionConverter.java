@@ -34,7 +34,8 @@ import org.eclipse.sirius.web.emf.compatibility.AQLInterpreterFactory;
 import org.eclipse.sirius.web.forms.description.FormDescription;
 import org.eclipse.sirius.web.forms.description.GroupDescription;
 import org.eclipse.sirius.web.forms.description.PageDescription;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.GetOrCreateRandomIdProvider;
 import org.eclipse.sirius.web.representations.VariableManager;
 import org.springframework.stereotype.Service;
@@ -49,6 +50,8 @@ public class ViewExtensionDescriptionConverter implements IViewExtensionDescript
 
     private final IObjectService objectService;
 
+    private final AQLInterpreterAPI interpreterAPI;
+
     private final AQLInterpreterFactory interpreterFactory;
 
     private final IIdentifierProvider identifierProvider;
@@ -59,10 +62,11 @@ public class ViewExtensionDescriptionConverter implements IViewExtensionDescript
 
     private final IdentifiedElementLabelProvider identifiedElementLabelProvider;
 
-    public ViewExtensionDescriptionConverter(IObjectService objectService, AQLInterpreterFactory interpreterFactory, IIdentifierProvider identifierProvider,
-            ISemanticCandidatesProviderFactory semanticCandidatesProviderFactory, IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider,
-            IdentifiedElementLabelProvider identifiedElementLabelProvider) {
+    public ViewExtensionDescriptionConverter(IObjectService objectService, AQLInterpreterAPI interpreterAPI, AQLInterpreterFactory interpreterFactory, IIdentifierProvider identifierProvider,
+                                             ISemanticCandidatesProviderFactory semanticCandidatesProviderFactory, IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider,
+                                             IdentifiedElementLabelProvider identifiedElementLabelProvider) {
         this.objectService = Objects.requireNonNull(objectService);
+        this.interpreterAPI = Objects.requireNonNull(interpreterAPI);
         this.interpreterFactory = Objects.requireNonNull(interpreterFactory);
         this.identifierProvider = Objects.requireNonNull(identifierProvider);
         this.semanticCandidatesProviderFactory = Objects.requireNonNull(semanticCandidatesProviderFactory);
@@ -72,9 +76,10 @@ public class ViewExtensionDescriptionConverter implements IViewExtensionDescript
 
     @Override
     public FormDescription convert(ViewExtensionDescription viewExtensionDescription) {
-        AQLInterpreter interpreter = this.interpreterFactory.create(viewExtensionDescription);
-        PageDescriptionConverter pageDescriptionConverter = new PageDescriptionConverter(interpreter, this.identifierProvider, this.semanticCandidatesProviderFactory);
-        GroupDescriptionConverter groupDescriptionConverter = new GroupDescriptionConverter(interpreter, this.objectService, this.identifierProvider, this.modelOperationHandlerSwitchProvider);
+
+        AQLEntry entry = this.interpreterFactory.create(viewExtensionDescription);
+        PageDescriptionConverter pageDescriptionConverter = new PageDescriptionConverter(interpreterAPI, this.identifierProvider, this.semanticCandidatesProviderFactory, entry);
+        GroupDescriptionConverter groupDescriptionConverter = new GroupDescriptionConverter(interpreterAPI, this.objectService, this.identifierProvider, this.modelOperationHandlerSwitchProvider, entry);
 
         // @formatter:off
         Map<org.eclipse.sirius.properties.GroupDescription, GroupDescription> siriusGroup2SiriusWebGroup = new HashMap<>();

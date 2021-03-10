@@ -18,7 +18,8 @@ import java.util.function.Function;
 
 import org.eclipse.sirius.web.core.api.IObjectService;
 import org.eclipse.sirius.web.diagrams.description.DiagramDescription.Builder;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.VariableManager;
 import org.springframework.stereotype.Service;
 
@@ -37,7 +38,7 @@ public class DiagramDescriptionTargetObjectIdProviderPopulator implements IDiagr
     }
 
     @Override
-    public Builder populate(Builder builder, org.eclipse.sirius.diagram.description.DiagramDescription siriusDiagramDescription, AQLInterpreter interpreter) {
+    public Builder populate(Builder builder, org.eclipse.sirius.diagram.description.DiagramDescription siriusDiagramDescription, AQLInterpreterAPI interpreter, AQLEntry entry) {
         Function<VariableManager, String> targetObjectIdProvider = variableManager -> {
             Object object = variableManager.getVariables().get(VariableManager.SELF);
             return Optional.ofNullable(object).map(this.objectService::getId).orElse(null);

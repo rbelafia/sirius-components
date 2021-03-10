@@ -21,7 +21,8 @@ import java.util.Optional;
 import org.eclipse.sirius.viewpoint.description.tool.For;
 import org.eclipse.sirius.viewpoint.description.tool.ModelOperation;
 import org.eclipse.sirius.web.compat.api.IModelOperationHandler;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.representations.Status;
 
 /**
@@ -31,16 +32,19 @@ import org.eclipse.sirius.web.representations.Status;
  */
 public class ForOperationHandler implements IModelOperationHandler {
 
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreter;
 
     private final ChildModelOperationHandler childModelOperationHandler;
 
     private final For forOperation;
 
-    public ForOperationHandler(AQLInterpreter interpreter, ChildModelOperationHandler childModelOperationHandler, For forOperation) {
+    private final AQLEntry entry;
+
+    public ForOperationHandler(AQLInterpreterAPI interpreter, ChildModelOperationHandler childModelOperationHandler, For forOperation, AQLEntry entry) {
         this.interpreter = Objects.requireNonNull(interpreter);
         this.childModelOperationHandler = Objects.requireNonNull(childModelOperationHandler);
         this.forOperation = Objects.requireNonNull(forOperation);
+        this.entry = entry;
     }
 
     @Override
@@ -49,7 +53,7 @@ public class ForOperationHandler implements IModelOperationHandler {
         String iteratedVariableName = this.forOperation.getIteratorName();
 
         if (expression != null && !expression.isBlank() && iteratedVariableName != null && !iteratedVariableName.isBlank()) {
-            Optional<List<Object>> optionalObjectsToIterate = this.interpreter.evaluateExpression(variables, expression).asObjects();
+            Optional<List<Object>> optionalObjectsToIterate = this.interpreter.evaluateExpression(variables, expression, entry).asObjects();
 
             if (optionalObjectsToIterate.isPresent()) {
                 List<Object> objectsToIterate = optionalObjectsToIterate.get();
@@ -59,7 +63,7 @@ public class ForOperationHandler implements IModelOperationHandler {
                     childVariables.put(iteratedVariableName, object);
 
                     List<ModelOperation> subModelOperations = this.forOperation.getSubModelOperations();
-                    this.childModelOperationHandler.handle(this.interpreter, childVariables, subModelOperations);
+                    this.childModelOperationHandler.handle(this.interpreter, childVariables, subModelOperations, entry);
                 }
             }
         }

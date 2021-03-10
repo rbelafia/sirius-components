@@ -24,8 +24,11 @@ import org.eclipse.sirius.diagram.description.style.EdgeStyleDescription;
 import org.eclipse.sirius.diagram.description.style.StyleFactory;
 import org.eclipse.sirius.viewpoint.description.FixedColor;
 import org.eclipse.sirius.web.diagrams.EdgeStyle;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.VariableManager;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -38,6 +41,19 @@ public class EdgeMappingStyleProviderTestCases {
     private static final String EXPRESSION_FALSE = "aql:false"; //$NON-NLS-1$
 
     private static final String EXPRESSION_TRUE = "aql:true"; //$NON-NLS-1$
+
+    private AQLInterpreter interpreter;
+
+    private AQLInterpreterAPI interpreterAPI;
+
+    private AQLEntry entry;
+
+    @Before
+    public void setUp() throws Exception {
+        interpreter = new AQLInterpreter();
+        interpreterAPI = new AQLInterpreterAPI(interpreter);
+        entry = interpreterAPI.initializeUser(List.of(), List.of(EcorePackage.eINSTANCE));
+    }
 
     /**
      * Non-regression test for Conditional styles on edges.
@@ -56,8 +72,7 @@ public class EdgeMappingStyleProviderTestCases {
         edgeMapping.getConditionnalStyles().add(this.createConditionalStyle(EXPRESSION_TRUE, this.createStyle(3, 3, 3)));
 
         VariableManager variableManager = new VariableManager();
-        AQLInterpreter interpreter = new AQLInterpreter(List.of(), List.of(EcorePackage.eINSTANCE));
-        EdgeStyle edgeStyle = new EdgeMappingStyleProvider(interpreter, edgeMapping).apply(variableManager);
+        EdgeStyle edgeStyle = new EdgeMappingStyleProvider(interpreterAPI, edgeMapping, entry).apply(variableManager);
 
         assertThat(edgeStyle.getColor()).isEqualTo("#020202"); //$NON-NLS-1$
     }

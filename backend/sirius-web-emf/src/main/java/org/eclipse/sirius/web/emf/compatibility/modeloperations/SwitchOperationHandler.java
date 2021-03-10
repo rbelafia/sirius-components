@@ -24,7 +24,8 @@ import org.eclipse.sirius.viewpoint.description.tool.Default;
 import org.eclipse.sirius.viewpoint.description.tool.ModelOperation;
 import org.eclipse.sirius.viewpoint.description.tool.Switch;
 import org.eclipse.sirius.web.compat.api.IModelOperationHandler;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.representations.Status;
 
 /**
@@ -34,16 +35,19 @@ import org.eclipse.sirius.web.representations.Status;
  */
 public class SwitchOperationHandler implements IModelOperationHandler {
 
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreter;
 
     private final ChildModelOperationHandler childModelOperationHandler;
 
     private final Switch switchOperation;
 
-    public SwitchOperationHandler(AQLInterpreter interpreter, ChildModelOperationHandler childModelOperationHandler, Switch switchOperation) {
+    private final AQLEntry entry;
+
+    public SwitchOperationHandler(AQLInterpreterAPI interpreter, ChildModelOperationHandler childModelOperationHandler, Switch switchOperation, AQLEntry entry) {
         this.interpreter = Objects.requireNonNull(interpreter);
         this.childModelOperationHandler = Objects.requireNonNull(childModelOperationHandler);
         this.switchOperation = Objects.requireNonNull(switchOperation);
+        this.entry = entry;
     }
 
     @Override
@@ -56,11 +60,11 @@ public class SwitchOperationHandler implements IModelOperationHandler {
         for (Case switchCase : switchCases) {
             String conditionExpression = switchCase.getConditionExpression();
             if (conditionExpression != null) {
-                Optional<Boolean> optionalValueObject = this.interpreter.evaluateExpression(variables, conditionExpression).asBoolean();
+                Optional<Boolean> optionalValueObject = this.interpreter.evaluateExpression(variables, conditionExpression, entry).asBoolean();
 
                 if (optionalValueObject.isPresent() && optionalValueObject.get()) {
                     List<ModelOperation> subModelOperations = switchCase.getSubModelOperations();
-                    status = this.childModelOperationHandler.handle(this.interpreter, childVariables, subModelOperations);
+                    status = this.childModelOperationHandler.handle(this.interpreter, childVariables, subModelOperations, entry);
 
                     oneCaseHasBeenExecuted = true;
                     break;
@@ -72,7 +76,7 @@ public class SwitchOperationHandler implements IModelOperationHandler {
             Default defaultCase = this.switchOperation.getDefault();
             if (defaultCase != null) {
                 List<ModelOperation> subModelOperations = defaultCase.getSubModelOperations();
-                status = this.childModelOperationHandler.handle(this.interpreter, childVariables, subModelOperations);
+                status = this.childModelOperationHandler.handle(this.interpreter, childVariables, subModelOperations, entry);
             }
         }
 

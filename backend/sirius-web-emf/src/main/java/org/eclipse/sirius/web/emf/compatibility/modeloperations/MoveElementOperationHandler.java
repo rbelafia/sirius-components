@@ -24,7 +24,8 @@ import org.eclipse.sirius.ecore.extender.business.internal.accessor.ecore.EcoreI
 import org.eclipse.sirius.viewpoint.description.tool.ModelOperation;
 import org.eclipse.sirius.viewpoint.description.tool.MoveElement;
 import org.eclipse.sirius.web.compat.api.IModelOperationHandler;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.representations.Status;
 import org.eclipse.sirius.web.representations.VariableManager;
 import org.slf4j.Logger;
@@ -38,16 +39,19 @@ import org.slf4j.LoggerFactory;
 public class MoveElementOperationHandler implements IModelOperationHandler {
     private final Logger logger = LoggerFactory.getLogger(MoveElementOperationHandler.class);
 
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreter;
 
     private final ChildModelOperationHandler childModelOperationHandler;
 
     private final MoveElement moveElementOperation;
 
-    public MoveElementOperationHandler(AQLInterpreter interpreter, ChildModelOperationHandler childModelOperationHandler, MoveElement moveElementOperation) {
+    private final AQLEntry entry;
+
+    public MoveElementOperationHandler(AQLInterpreterAPI interpreter, ChildModelOperationHandler childModelOperationHandler, MoveElement moveElementOperation, AQLEntry entry) {
         this.interpreter = Objects.requireNonNull(interpreter);
         this.childModelOperationHandler = Objects.requireNonNull(childModelOperationHandler);
         this.moveElementOperation = Objects.requireNonNull(moveElementOperation);
+        this.entry = entry;
     }
 
     @Override
@@ -56,7 +60,7 @@ public class MoveElementOperationHandler implements IModelOperationHandler {
         String featureName = this.moveElementOperation.getFeatureName();
         if (featureName != null && !featureName.isBlank() && newContainerExpression != null && !newContainerExpression.isBlank()) {
             // @formatter:off
-            Optional<EObject> optionalNewContainer = this.interpreter.evaluateExpression(variables, newContainerExpression).asObject()
+            Optional<EObject> optionalNewContainer = this.interpreter.evaluateExpression(variables, newContainerExpression, entry).asObject()
                     .filter(EObject.class::isInstance)
                     .map(EObject.class::cast);
 
@@ -75,7 +79,7 @@ public class MoveElementOperationHandler implements IModelOperationHandler {
 
         Map<String, Object> childVariables = new HashMap<>(variables);
         List<ModelOperation> subModelOperations = this.moveElementOperation.getSubModelOperations();
-        return this.childModelOperationHandler.handle(this.interpreter, childVariables, subModelOperations);
+        return this.childModelOperationHandler.handle(this.interpreter, childVariables, subModelOperations, entry);
     }
 
     /**

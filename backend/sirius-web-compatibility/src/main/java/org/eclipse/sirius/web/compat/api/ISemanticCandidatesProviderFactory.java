@@ -15,7 +15,8 @@ package org.eclipse.sirius.web.compat.api;
 import java.util.List;
 import java.util.function.Function;
 
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.VariableManager;
 
 /**
@@ -24,5 +25,5 @@ import org.eclipse.sirius.web.representations.VariableManager;
  * @author sbegaudeau
  */
 public interface ISemanticCandidatesProviderFactory {
-    Function<VariableManager, List<Object>> getSemanticCandidatesProvider(AQLInterpreter interpreter, String domainClass, String semanticCandidatesExpression, String preconditionExpression);
+    Function<VariableManager, List<Object>> getSemanticCandidatesProvider(AQLInterpreterAPI interpreter, String domainClass, String semanticCandidatesExpression, String preconditionExpression, AQLEntry aqlEntry);
 }

@@ -24,7 +24,8 @@ import org.eclipse.sirius.ecore.extender.business.internal.accessor.ecore.EcoreI
 import org.eclipse.sirius.viewpoint.description.tool.ModelOperation;
 import org.eclipse.sirius.viewpoint.description.tool.RemoveElement;
 import org.eclipse.sirius.web.compat.api.IModelOperationHandler;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.Status;
 import org.eclipse.sirius.web.representations.VariableManager;
 import org.slf4j.Logger;
@@ -37,7 +38,7 @@ import org.slf4j.LoggerFactory;
  */
 public class RemoveElementOperationHandler implements IModelOperationHandler {
 
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreter;
 
     private final ChildModelOperationHandler childModelOperationHandler;
 
@@ -45,10 +46,13 @@ public class RemoveElementOperationHandler implements IModelOperationHandler {
 
     private final Logger logger = LoggerFactory.getLogger(CreateInstanceOperationHandler.class);
 
-    public RemoveElementOperationHandler(AQLInterpreter interpreter, ChildModelOperationHandler childModelOperationHandler, RemoveElement removeElementOperation) {
+    private final AQLEntry entry;
+
+    public RemoveElementOperationHandler(AQLInterpreterAPI interpreter, ChildModelOperationHandler childModelOperationHandler, RemoveElement removeElementOperation, AQLEntry entry) {
         this.interpreter = Objects.requireNonNull(interpreter);
         this.childModelOperationHandler = Objects.requireNonNull(childModelOperationHandler);
         this.removeElementOperation = Objects.requireNonNull(removeElementOperation);
+        this.entry = entry;
     }
 
     @Override
@@ -73,7 +77,7 @@ public class RemoveElementOperationHandler implements IModelOperationHandler {
 
         Map<String, Object> childVariables = new HashMap<>(variables);
         List<ModelOperation> subModelOperations = this.removeElementOperation.getSubModelOperations();
-        return this.childModelOperationHandler.handle(this.interpreter, childVariables, subModelOperations);
+        return this.childModelOperationHandler.handle(this.interpreter, childVariables, subModelOperations, this.entry);
     }
 
 }

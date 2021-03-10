@@ -15,7 +15,8 @@ package org.eclipse.sirius.web.compat.api;
 import java.util.function.Predicate;
 
 import org.eclipse.sirius.diagram.description.DiagramDescription;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.VariableManager;
 
 /**
@@ -24,5 +25,5 @@ import org.eclipse.sirius.web.representations.VariableManager;
  * @author sbegaudeau
  */
 public interface ICanCreateDiagramPredicateFactory {
-    Predicate<VariableManager> getCanCreateDiagramPredicate(DiagramDescription diagramDescription, AQLInterpreter interpreter);
+    Predicate<VariableManager> getCanCreateDiagramPredicate(DiagramDescription diagramDescription, AQLInterpreterAPI interpreter, AQLEntry entry);
 }

@@ -23,7 +23,8 @@ import org.eclipse.sirius.ecore.extender.business.internal.accessor.ecore.EcoreI
 import org.eclipse.sirius.viewpoint.description.tool.ModelOperation;
 import org.eclipse.sirius.viewpoint.description.tool.SetValue;
 import org.eclipse.sirius.web.compat.api.IModelOperationHandler;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.representations.Status;
 import org.eclipse.sirius.web.representations.VariableManager;
 
@@ -34,16 +35,19 @@ import org.eclipse.sirius.web.representations.VariableManager;
  */
 public class SetValueOperationHandler implements IModelOperationHandler {
 
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreter;
 
     private final ChildModelOperationHandler childModelOperationHandler;
 
     private final SetValue setValue;
 
-    public SetValueOperationHandler(AQLInterpreter interpreter, ChildModelOperationHandler childModelOperationHandler, SetValue setValue) {
+    private final AQLEntry entry;
+
+    public SetValueOperationHandler(AQLInterpreterAPI interpreter, ChildModelOperationHandler childModelOperationHandler, SetValue setValue, AQLEntry entry) {
         this.interpreter = Objects.requireNonNull(interpreter);
         this.childModelOperationHandler = Objects.requireNonNull(childModelOperationHandler);
         this.setValue = Objects.requireNonNull(setValue);
+        this.entry = entry;
     }
 
     @Override
@@ -51,7 +55,7 @@ public class SetValueOperationHandler implements IModelOperationHandler {
         String featureName = this.setValue.getFeatureName();
         if (featureName != null && !featureName.isBlank()) {
             String valueExpression = this.setValue.getValueExpression();
-            Optional<Object> optionalValueObject = this.interpreter.evaluateExpression(variables, valueExpression).asObject();
+            Optional<Object> optionalValueObject = this.interpreter.evaluateExpression(variables, valueExpression, entry).asObject();
 
             // @formatter:off
             Optional<EObject> optionalOwnerObject = Optional.ofNullable(variables.get(VariableManager.SELF))
@@ -69,7 +73,7 @@ public class SetValueOperationHandler implements IModelOperationHandler {
 
         Map<String, Object> childVariables = new HashMap<>(variables);
         List<ModelOperation> subModelOperations = this.setValue.getSubModelOperations();
-        return this.childModelOperationHandler.handle(this.interpreter, childVariables, subModelOperations);
+        return this.childModelOperationHandler.handle(this.interpreter, childVariables, subModelOperations, entry);
     }
 
 }

@@ -21,7 +21,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.eclipse.emf.ecore.EObject;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.interpreter.Result;
 import org.eclipse.sirius.web.representations.VariableManager;
 
@@ -42,15 +43,17 @@ public class SemanticCandidatesProvider implements Function<VariableManager, Lis
      */
     private static final String DEFAULT_SEMANTIC_CANDIDATES_EXPRESSION = "aql:self.eResource().getContents().eAllContents()"; //$NON-NLS-1$
 
-    private AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreter;
 
-    private String domainClass;
+    private final String domainClass;
 
-    private String semanticCandidatesExpression;
+    private final String semanticCandidatesExpression;
 
-    private String preconditionExpression;
+    private final String preconditionExpression;
 
-    public SemanticCandidatesProvider(AQLInterpreter interpreter, String domainClass, String semanticCandidatesExpression, String preconditionExpression) {
+    private final AQLEntry entry;
+
+    public SemanticCandidatesProvider(AQLInterpreterAPI interpreter, String domainClass, String semanticCandidatesExpression, String preconditionExpression, AQLEntry entry) {
         this.interpreter = Objects.requireNonNull(interpreter);
         this.domainClass = Objects.requireNonNull(domainClass);
         if (semanticCandidatesExpression == null || semanticCandidatesExpression.isBlank()) {
@@ -59,13 +62,15 @@ public class SemanticCandidatesProvider implements Function<VariableManager, Lis
             this.semanticCandidatesExpression = Objects.requireNonNull(semanticCandidatesExpression);
         }
         this.preconditionExpression = Objects.requireNonNull(preconditionExpression);
+
+        this.entry = entry;
     }
 
     @Override
     public List<Object> apply(VariableManager variableManager) {
         List<Object> semanticCandidates = new ArrayList<>();
 
-        Result result = this.interpreter.evaluateExpression(variableManager.getVariables(), this.semanticCandidatesExpression);
+        Result result = this.interpreter.evaluateExpression(variableManager.getVariables(), this.semanticCandidatesExpression, entry);
 
         DomainClassPredicate domainClassPredicate = new DomainClassPredicate(this.domainClass);
 
@@ -84,7 +89,7 @@ public class SemanticCandidatesProvider implements Function<VariableManager, Lis
             variables.put(VariableManager.SELF, eObject);
 
             if (!this.preconditionExpression.isBlank()) {
-                Result preconditionResult = this.interpreter.evaluateExpression(variables, this.preconditionExpression);
+                Result preconditionResult = this.interpreter.evaluateExpression(variables, this.preconditionExpression, entry);
                 preconditionResult.asBoolean().ifPresent(isValid -> {
                     if (isValid) {
                         semanticCandidates.add(eObject);

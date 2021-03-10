@@ -15,7 +15,7 @@ package org.eclipse.sirius.web.compat.api;
 import java.util.function.Predicate;
 
 import org.eclipse.sirius.properties.ViewExtensionDescription;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.VariableManager;
 
 /**
@@ -24,5 +24,5 @@ import org.eclipse.sirius.web.representations.VariableManager;
  * @author sbegaudeau
  */
 public interface ICanCreateFormPredicateFactory {
-    Predicate<VariableManager> getCanCreateFormPredicate(ViewExtensionDescription viewExtensionDescription, AQLInterpreter interpreter);
+    Predicate<VariableManager> getCanCreateFormPredicate(ViewExtensionDescription viewExtensionDescription, AQLInterpreterAPI interpreter);
 }

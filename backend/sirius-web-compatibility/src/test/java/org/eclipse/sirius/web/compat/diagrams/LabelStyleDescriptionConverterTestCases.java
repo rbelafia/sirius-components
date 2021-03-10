@@ -21,8 +21,11 @@ import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.sirius.diagram.description.style.ShapeContainerStyleDescription;
 import org.eclipse.sirius.diagram.description.style.StyleFactory;
 import org.eclipse.sirius.web.diagrams.description.LabelStyleDescription;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.VariableManager;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -31,6 +34,19 @@ import org.junit.Test;
  * @author arichard
  */
 public class LabelStyleDescriptionConverterTestCases {
+
+    private AQLInterpreter interpreter;
+
+    private AQLInterpreterAPI interpreterAPI;
+
+    private AQLEntry entry;
+
+    @Before
+    public void setUp() {
+        interpreter = new AQLInterpreter();
+        interpreterAPI = new AQLInterpreterAPI(interpreter);
+        entry = interpreterAPI.initializeUser(List.of(), List.of(EcorePackage.eINSTANCE));
+    }
 
     @Test
     public void testConvertIconPath() {
@@ -41,10 +57,9 @@ public class LabelStyleDescriptionConverterTestCases {
         ShapeContainerStyleDescription styleDescription = StyleFactory.eINSTANCE.createShapeContainerStyleDescription();
         styleDescription.setIconPath(iconFullPath);
 
-        AQLInterpreter interpreter = new AQLInterpreter(List.of(), List.of(EcorePackage.eINSTANCE));
         VariableManager variableManager = new VariableManager();
 
-        LabelStyleDescriptionConverter labelStyleDescriptionConverter = new LabelStyleDescriptionConverter(interpreter, new NoOpObjectService());
+        LabelStyleDescriptionConverter labelStyleDescriptionConverter = new LabelStyleDescriptionConverter(interpreterAPI, new NoOpObjectService(), entry);
         LabelStyleDescription labelStyleDescriptionConverted = labelStyleDescriptionConverter.convert(styleDescription);
 
         assertThat(labelStyleDescriptionConverted).isNotNull();

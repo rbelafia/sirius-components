@@ -20,7 +20,8 @@ import java.util.Optional;
 import org.eclipse.sirius.viewpoint.description.tool.If;
 import org.eclipse.sirius.viewpoint.description.tool.ModelOperation;
 import org.eclipse.sirius.web.compat.api.IModelOperationHandler;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.representations.Status;
 
 /**
@@ -30,27 +31,30 @@ import org.eclipse.sirius.web.representations.Status;
  */
 public class IfOperationHandler implements IModelOperationHandler {
 
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreter;
 
     private final ChildModelOperationHandler childModelOperationHandler;
 
     private final If ifOperation;
 
-    public IfOperationHandler(AQLInterpreter interpreter, ChildModelOperationHandler childModelOperationHandler, If ifOperation) {
+    private final AQLEntry entry;
+
+    public IfOperationHandler(AQLInterpreterAPI interpreter, ChildModelOperationHandler childModelOperationHandler, If ifOperation, AQLEntry entry) {
         this.interpreter = Objects.requireNonNull(interpreter);
         this.childModelOperationHandler = Objects.requireNonNull(childModelOperationHandler);
         this.ifOperation = Objects.requireNonNull(ifOperation);
+        this.entry = entry;
     }
 
     @Override
     public Status handle(Map<String, Object> variables) {
         String conditionExpression = this.ifOperation.getConditionExpression();
         if (conditionExpression != null && !conditionExpression.isBlank()) {
-            Optional<Boolean> optionalValueObject = this.interpreter.evaluateExpression(variables, conditionExpression).asBoolean();
+            Optional<Boolean> optionalValueObject = this.interpreter.evaluateExpression(variables, conditionExpression, entry).asBoolean();
 
             if (optionalValueObject.isPresent() && optionalValueObject.get()) {
                 List<ModelOperation> subModelOperations = this.ifOperation.getSubModelOperations();
-                return this.childModelOperationHandler.handle(this.interpreter, variables, subModelOperations);
+                return this.childModelOperationHandler.handle(this.interpreter, variables, subModelOperations, entry);
             }
         }
 

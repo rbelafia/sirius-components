@@ -22,7 +22,8 @@ import org.eclipse.sirius.diagram.description.style.WorkspaceImageDescription;
 import org.eclipse.sirius.web.diagrams.INodeStyle;
 import org.eclipse.sirius.web.diagrams.LineStyle;
 import org.eclipse.sirius.web.diagrams.RectangularNodeStyle;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.interpreter.Result;
 import org.eclipse.sirius.web.representations.VariableManager;
 
@@ -33,18 +34,21 @@ import org.eclipse.sirius.web.representations.VariableManager;
  */
 public class ContainerMappingStyleProvider implements Function<VariableManager, INodeStyle> {
 
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreterAPI;
 
     private final ContainerMapping containerMapping;
 
-    public ContainerMappingStyleProvider(AQLInterpreter interpreter, ContainerMapping containerMapping) {
-        this.interpreter = Objects.requireNonNull(interpreter);
+    private final AQLEntry entry;
+
+    public ContainerMappingStyleProvider(AQLInterpreterAPI interpreterAPI, ContainerMapping containerMapping, AQLEntry entry) {
+        this.interpreterAPI = Objects.requireNonNull(interpreterAPI);
         this.containerMapping = Objects.requireNonNull(containerMapping);
+        this.entry = Objects.requireNonNull(entry);
     }
 
     @Override
     public INodeStyle apply(VariableManager variableManager) {
-        ContainerStyleDescription containerStyleDescription = new ContainerStyleDescriptionProvider(this.interpreter, this.containerMapping).getContainerStyleDescription(variableManager);
+        ContainerStyleDescription containerStyleDescription = new ContainerStyleDescriptionProvider(interpreterAPI, this.containerMapping, entry).getContainerStyleDescription(variableManager);
         return this.getNodeStyle(variableManager, containerStyleDescription);
     }
 
@@ -56,7 +60,7 @@ public class ContainerMappingStyleProvider implements Function<VariableManager, 
             style = this.createRectangularNodeStyle(variableManager, flatContainerStyleDescription);
         } else if (containerStyleDescription instanceof WorkspaceImageDescription) {
             WorkspaceImageDescription workspaceImageDescription = (WorkspaceImageDescription) containerStyleDescription;
-            WorkspaceImageDescriptionConverter workspaceImageDescriptionConverter = new WorkspaceImageDescriptionConverter(this.interpreter, variableManager, workspaceImageDescription);
+            WorkspaceImageDescriptionConverter workspaceImageDescriptionConverter = new WorkspaceImageDescriptionConverter(this.interpreterAPI, variableManager, workspaceImageDescription, entry);
             style = workspaceImageDescriptionConverter.convert();
         }
 
@@ -64,15 +68,15 @@ public class ContainerMappingStyleProvider implements Function<VariableManager, 
     }
 
     private RectangularNodeStyle createRectangularNodeStyle(VariableManager variableManager, FlatContainerStyleDescription flatContainerStyleDescription) {
-        ColorDescriptionConverter backgroundColorProvider = new ColorDescriptionConverter(this.interpreter, variableManager);
-        ColorDescriptionConverter borderColorProvider = new ColorDescriptionConverter(this.interpreter, variableManager);
+        ColorDescriptionConverter backgroundColorProvider = new ColorDescriptionConverter(this.interpreterAPI, variableManager, entry);
+        ColorDescriptionConverter borderColorProvider = new ColorDescriptionConverter(this.interpreterAPI, variableManager, entry);
 
         String color = backgroundColorProvider.convert(flatContainerStyleDescription.getBackgroundColor());
         String borderColor = borderColorProvider.convert(flatContainerStyleDescription.getBorderColor());
 
         LineStyle borderStyle = new LineStyleConverter().getStyle(flatContainerStyleDescription.getBorderLineStyle());
 
-        Result result = this.interpreter.evaluateExpression(variableManager.getVariables(), flatContainerStyleDescription.getBorderSizeComputationExpression());
+        Result result = this.interpreterAPI.evaluateExpression(variableManager.getVariables(), flatContainerStyleDescription.getBorderSizeComputationExpression(), entry);
         int borderSize = result.asInt().getAsInt();
 
         // @formatter:off

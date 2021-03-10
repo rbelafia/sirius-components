@@ -19,8 +19,11 @@ import java.util.List;
 import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.sirius.viewpoint.description.DescriptionFactory;
 import org.eclipse.sirius.viewpoint.description.FixedColor;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.VariableManager;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -30,6 +33,19 @@ import org.junit.Test;
  */
 public class ColorDescriptionConverterTestCases {
 
+    private AQLInterpreter interpreter;
+
+    private AQLInterpreterAPI interpreterAPI;
+
+    private AQLEntry entry;
+
+    @Before
+    public void setUp() throws Exception {
+        interpreter = new AQLInterpreter();
+        interpreterAPI = new AQLInterpreterAPI(interpreter);
+        entry = interpreterAPI.initializeUser(List.of(), List.of(EcorePackage.eINSTANCE));
+    }
+
     @Test
     public void testConvertFixedColor() {
         FixedColor fixedColor = DescriptionFactory.eINSTANCE.createFixedColor();
@@ -37,9 +53,8 @@ public class ColorDescriptionConverterTestCases {
         fixedColor.setGreen(1);
         fixedColor.setBlue(16);
 
-        AQLInterpreter interpreter = new AQLInterpreter(List.of(), List.of(EcorePackage.eINSTANCE));
         VariableManager variableManager = new VariableManager();
-        ColorDescriptionConverter colorProvider = new ColorDescriptionConverter(interpreter, variableManager);
+        ColorDescriptionConverter colorProvider = new ColorDescriptionConverter(interpreterAPI, variableManager, entry);
         String color = colorProvider.convert(fixedColor);
         assertThat(color).isEqualTo("#0f0110"); //$NON-NLS-1$
     }

@@ -18,7 +18,8 @@ import java.util.Objects;
 import org.eclipse.sirius.diagram.description.ConditionalEdgeStyleDescription;
 import org.eclipse.sirius.diagram.description.EdgeMapping;
 import org.eclipse.sirius.diagram.description.style.EdgeStyleDescription;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.interpreter.Result;
 import org.eclipse.sirius.web.representations.VariableManager;
 
@@ -28,13 +29,16 @@ import org.eclipse.sirius.web.representations.VariableManager;
  * @author sbegaudeau
  */
 public class EdgeStyleDescriptionProvider {
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreter;
 
     private final EdgeMapping edgeMapping;
 
-    public EdgeStyleDescriptionProvider(AQLInterpreter interpreter, EdgeMapping edgeMapping) {
+    private final AQLEntry entry;
+
+    public EdgeStyleDescriptionProvider(AQLInterpreterAPI interpreter, EdgeMapping edgeMapping, AQLEntry entry) {
         this.interpreter = Objects.requireNonNull(interpreter);
         this.edgeMapping = Objects.requireNonNull(edgeMapping);
+        this.entry = entry;
     }
 
     public EdgeStyleDescription getEdgeStyleDescription(VariableManager variableManager) {
@@ -42,7 +46,7 @@ public class EdgeStyleDescriptionProvider {
         List<ConditionalEdgeStyleDescription> conditionnalStyles = this.edgeMapping.getConditionnalStyles();
         for (ConditionalEdgeStyleDescription conditionalStyle : conditionnalStyles) {
             String predicateExpression = conditionalStyle.getPredicateExpression();
-            Result result = this.interpreter.evaluateExpression(variableManager.getVariables(), predicateExpression);
+            Result result = this.interpreter.evaluateExpression(variableManager.getVariables(), predicateExpression, entry);
             boolean shouldUseStyle = result.asBoolean().orElse(Boolean.FALSE).booleanValue();
             if (shouldUseStyle) {
                 styleDescription = conditionalStyle.getStyle();

@@ -24,7 +24,8 @@ import org.eclipse.sirius.web.compat.api.IModelOperationHandlerSwitchProvider;
 import org.eclipse.sirius.web.core.api.IObjectService;
 import org.eclipse.sirius.web.forms.description.ForDescription;
 import org.eclipse.sirius.web.forms.description.IfDescription;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.representations.VariableManager;
 
 /**
@@ -34,7 +35,7 @@ import org.eclipse.sirius.web.representations.VariableManager;
  */
 public class ForDescriptionConverter {
 
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreterAPI;
 
     private final IObjectService objectService;
 
@@ -42,21 +43,24 @@ public class ForDescriptionConverter {
 
     private final IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider;
 
-    public ForDescriptionConverter(AQLInterpreter interpreter, IObjectService objectService, IIdentifierProvider identifierProvider,
-            IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider) {
-        this.interpreter = Objects.requireNonNull(interpreter);
+    private final AQLEntry entry;
+
+    public ForDescriptionConverter(AQLInterpreterAPI interpreterAPI, IObjectService objectService, IIdentifierProvider identifierProvider,
+                                   IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider, AQLEntry entry) {
+        this.interpreterAPI = Objects.requireNonNull(interpreterAPI);
         this.objectService = Objects.requireNonNull(objectService);
         this.identifierProvider = Objects.requireNonNull(identifierProvider);
         this.modelOperationHandlerSwitchProvider = Objects.requireNonNull(modelOperationHandlerSwitchProvider);
+        this.entry = entry;
     }
 
     public ForDescription convert(org.eclipse.sirius.properties.DynamicMappingForDescription siriusForDescription) {
         // @formatter:off
         Function<VariableManager, List<Object>> iterableProvider = (variableManager) -> {
-            return this.interpreter.evaluateExpression(variableManager.getVariables(), siriusForDescription.getIterableExpression()).asObjects()
+            return this.interpreterAPI.evaluateExpression(variableManager.getVariables(), siriusForDescription.getIterableExpression(), entry).asObjects()
                     .orElse(Collections.emptyList());
         };
-        IfDescriptionConverter converter = new IfDescriptionConverter(this.interpreter, this.objectService, this.identifierProvider, this.modelOperationHandlerSwitchProvider);
+        IfDescriptionConverter converter = new IfDescriptionConverter(this.interpreterAPI, this.objectService, this.identifierProvider, this.modelOperationHandlerSwitchProvider, entry);
         List<IfDescription> ifDescriptions = siriusForDescription.getIfs().stream()
                 .flatMap(ifDescription -> converter.convert(ifDescription).stream())
                 .collect(Collectors.toUnmodifiableList());

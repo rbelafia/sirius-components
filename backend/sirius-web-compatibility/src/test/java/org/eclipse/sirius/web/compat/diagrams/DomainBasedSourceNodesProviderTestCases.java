@@ -30,8 +30,11 @@ import org.eclipse.sirius.web.diagrams.Size;
 import org.eclipse.sirius.web.diagrams.description.DiagramDescription;
 import org.eclipse.sirius.web.diagrams.elements.NodeElementProps;
 import org.eclipse.sirius.web.diagrams.renderer.DiagramRenderingCache;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.VariableManager;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -40,6 +43,19 @@ import org.junit.Test;
  * @author sbegaudeau
  */
 public class DomainBasedSourceNodesProviderTestCases {
+
+    private AQLInterpreter interpreter;
+
+    private AQLInterpreterAPI interpreterAPI;
+
+    private AQLEntry entry;
+
+    @Before
+    public void setUp() throws Exception {
+        interpreter = new AQLInterpreter();
+        interpreterAPI = new AQLInterpreterAPI(interpreter);
+        entry = interpreterAPI.initializeUser(List.of(), List.of(EcorePackage.eINSTANCE));
+    }
 
     @Test
     public void testComputeSourceNodes() {
@@ -57,12 +73,10 @@ public class DomainBasedSourceNodesProviderTestCases {
         Element nodeElement = this.createNodeElement(UUID.fromString(nodeMapping.getName()));
         cache.put(object, nodeElement);
 
-        AQLInterpreter interpreter = new AQLInterpreter(List.of(), List.of(EcorePackage.eINSTANCE));
-
         variableManager.put(DiagramDescription.CACHE, cache);
 
         IIdentifierProvider identifierProvider = element -> nodeMapping.getName();
-        List<Element> sourceNodes = new DomainBasedSourceNodesProvider(edgeMapping, interpreter, identifierProvider).apply(variableManager);
+        List<Element> sourceNodes = new DomainBasedSourceNodesProvider(edgeMapping, interpreterAPI, identifierProvider, entry).apply(variableManager);
         assertThat(sourceNodes).hasSize(1);
         assertThat(sourceNodes).contains(nodeElement);
     }

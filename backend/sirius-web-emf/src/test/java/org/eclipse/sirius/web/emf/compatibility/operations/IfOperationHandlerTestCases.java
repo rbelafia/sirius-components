@@ -46,7 +46,7 @@ public class IfOperationHandlerTestCases {
         this.operationTestContext = new OperationTestContext();
 
         this.ifOperation = ToolFactory.eINSTANCE.createIf();
-        this.ifOperationHandler = new IfOperationHandler(this.operationTestContext.getInterpreter(), new ChildModelOperationHandler(), this.ifOperation);
+        this.ifOperationHandler = new IfOperationHandler(this.operationTestContext.getInterpreter(), new ChildModelOperationHandler(), this.ifOperation, this.operationTestContext.getEntry());
     }
 
     @Test

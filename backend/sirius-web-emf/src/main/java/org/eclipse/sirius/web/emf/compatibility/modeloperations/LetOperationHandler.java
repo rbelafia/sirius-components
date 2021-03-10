@@ -21,7 +21,8 @@ import java.util.Optional;
 import org.eclipse.sirius.viewpoint.description.tool.Let;
 import org.eclipse.sirius.viewpoint.description.tool.ModelOperation;
 import org.eclipse.sirius.web.compat.api.IModelOperationHandler;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.representations.Status;
 
 /**
@@ -31,16 +32,19 @@ import org.eclipse.sirius.web.representations.Status;
  */
 public class LetOperationHandler implements IModelOperationHandler {
 
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreter;
 
     private final ChildModelOperationHandler childModelOperationHandler;
 
     private final Let letOperation;
 
-    public LetOperationHandler(AQLInterpreter interpreter, ChildModelOperationHandler childModelOperationHandler, Let letOperation) {
+    private final AQLEntry entry;
+
+    public LetOperationHandler(AQLInterpreterAPI interpreter, ChildModelOperationHandler childModelOperationHandler, Let letOperation, AQLEntry entry) {
         this.interpreter = Objects.requireNonNull(interpreter);
         this.childModelOperationHandler = Objects.requireNonNull(childModelOperationHandler);
         this.letOperation = Objects.requireNonNull(letOperation);
+        this.entry = entry;
     }
 
     @Override
@@ -50,7 +54,7 @@ public class LetOperationHandler implements IModelOperationHandler {
         Map<String, Object> childVariables = new HashMap<>(variables);
 
         if (valueExpression != null && !valueExpression.isBlank() && variableName != null && !variableName.isBlank()) {
-            Optional<Object> optionalValueObject = this.interpreter.evaluateExpression(variables, valueExpression).asObject();
+            Optional<Object> optionalValueObject = this.interpreter.evaluateExpression(variables, valueExpression, entry).asObject();
 
             if (optionalValueObject.isPresent()) {
                 Object valueObject = optionalValueObject.get();
@@ -60,7 +64,7 @@ public class LetOperationHandler implements IModelOperationHandler {
         }
 
         List<ModelOperation> subModelOperations = this.letOperation.getSubModelOperations();
-        return this.childModelOperationHandler.handle(this.interpreter, childVariables, subModelOperations);
+        return this.childModelOperationHandler.handle(this.interpreter, childVariables, subModelOperations, entry);
     }
 
 }

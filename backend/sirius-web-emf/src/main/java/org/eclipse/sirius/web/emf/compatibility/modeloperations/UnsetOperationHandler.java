@@ -24,7 +24,8 @@ import org.eclipse.sirius.ecore.extender.business.internal.accessor.ecore.EcoreI
 import org.eclipse.sirius.viewpoint.description.tool.ModelOperation;
 import org.eclipse.sirius.viewpoint.description.tool.Unset;
 import org.eclipse.sirius.web.compat.api.IModelOperationHandler;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.representations.Status;
 import org.eclipse.sirius.web.representations.VariableManager;
 
@@ -35,16 +36,19 @@ import org.eclipse.sirius.web.representations.VariableManager;
  */
 public class UnsetOperationHandler implements IModelOperationHandler {
 
-    private final AQLInterpreter interpreter;
+    private final AQLInterpreterAPI interpreter;
 
     private final ChildModelOperationHandler childModelOperationHandler;
 
     private final Unset unsetOperation;
 
-    public UnsetOperationHandler(AQLInterpreter interpreter, ChildModelOperationHandler childModelOperationHandler, Unset unsetOperation) {
+    private final AQLEntry entry;
+
+    public UnsetOperationHandler(AQLInterpreterAPI interpreter, ChildModelOperationHandler childModelOperationHandler, Unset unsetOperation, AQLEntry entry) {
         this.interpreter = Objects.requireNonNull(interpreter);
         this.childModelOperationHandler = Objects.requireNonNull(childModelOperationHandler);
         this.unsetOperation = Objects.requireNonNull(unsetOperation);
+        this.entry = entry;
     }
 
     @Override
@@ -62,7 +66,7 @@ public class UnsetOperationHandler implements IModelOperationHandler {
                 EObject ownerObject = optionalOwnerObject.get();
                 List<EObject> elementsToUnset = null;
                 if (elementExpression != null && !elementExpression.isBlank()) {
-                    Optional<List<Object>> optionalObjectsToUnset = this.interpreter.evaluateExpression(variables, elementExpression).asObjects();
+                    Optional<List<Object>> optionalObjectsToUnset = this.interpreter.evaluateExpression(variables, elementExpression, entry).asObjects();
                     if (optionalObjectsToUnset.isPresent()) {
                         elementsToUnset = optionalObjectsToUnset.get().stream()
                             .filter(EObject.class::isInstance)
@@ -85,7 +89,7 @@ public class UnsetOperationHandler implements IModelOperationHandler {
 
         Map<String, Object> childVariables = new HashMap<>(variables);
         List<ModelOperation> subModelOperations = this.unsetOperation.getSubModelOperations();
-        return this.childModelOperationHandler.handle(this.interpreter, childVariables, subModelOperations);
+        return this.childModelOperationHandler.handle(this.interpreter, childVariables, subModelOperations, entry);
     }
 
 }

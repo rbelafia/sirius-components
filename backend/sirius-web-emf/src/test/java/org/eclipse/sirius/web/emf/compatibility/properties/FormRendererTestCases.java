@@ -43,8 +43,11 @@ import org.eclipse.sirius.web.forms.description.RadioDescription;
 import org.eclipse.sirius.web.forms.description.SelectDescription;
 import org.eclipse.sirius.web.forms.description.TextfieldDescription;
 import org.eclipse.sirius.web.forms.renderer.FormRenderer;
+import org.eclipse.sirius.web.interpreter.AQLEntry;
 import org.eclipse.sirius.web.interpreter.AQLInterpreter;
+import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.representations.VariableManager;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
 
@@ -59,14 +62,23 @@ public class FormRendererTestCases {
 
     private static final String AQL_SELF_EPACKAGE_ECLASSIFIERS = "aql:self.ePackage.eClassifiers"; //$NON-NLS-1$
 
+    private AQLInterpreter interpreter;
+    private AQLInterpreterAPI aqlInterpreterAPI;
+
+    @Before
+    public void setUp() {
+        interpreter = new AQLInterpreter();
+        aqlInterpreterAPI = new AQLInterpreterAPI(interpreter);
+    }
+
     @Test
     public void testEcoreModel() {
         ViewExtensionDescription viewExtensionDescription = this.createSiriusProperties();
 
-        AQLInterpreterFactory interpreterFactory = new AQLInterpreterFactory() {
+        AQLInterpreterFactory interpreterFactory = new AQLInterpreterFactory(aqlInterpreterAPI) {
             @Override
-            public AQLInterpreter create(ViewExtensionDescription viewExtensionDescription) {
-                return new AQLInterpreter(List.of(), List.of(EcorePackage.eINSTANCE));
+            public AQLEntry create(ViewExtensionDescription viewExtensionDescription) {
+                return aqlInterpreterAPI.initializeUser(List.of(), List.of(EcorePackage.eINSTANCE));
             }
         };
 
@@ -74,7 +86,7 @@ public class FormRendererTestCases {
         IdentifiedElementLabelProvider identifiedElementLabelProvider = new IdentifiedElementLabelProvider();
         ISemanticCandidatesProviderFactory semanticCandidatesProviderFactory = SemanticCandidatesProvider::new;
         IModelOperationHandlerSwitchProvider modelOperationHandlerSwitchProvider = ModelOperationHandlerSwitch::new;
-        ViewExtensionDescriptionConverter converter = new ViewExtensionDescriptionConverter(new NoOpObjectService(), interpreterFactory, identifierProvider, semanticCandidatesProviderFactory,
+        ViewExtensionDescriptionConverter converter = new ViewExtensionDescriptionConverter(new NoOpObjectService(), aqlInterpreterAPI, interpreterFactory, identifierProvider, semanticCandidatesProviderFactory,
                 modelOperationHandlerSwitchProvider, identifiedElementLabelProvider);
         FormDescription description = converter.convert(viewExtensionDescription);
 
