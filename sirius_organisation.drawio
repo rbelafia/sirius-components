@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2021-03-10T14:48:47.132Z" agent="5.0 (X11)" etag="81uGlK32h91mdBo7gh1d" version="14.4.6" type="github" pages="2">
+<mxfile host="app.diagrams.net" modified="2021-03-10T16:27:00.889Z" agent="5.0 (X11)" etag="vCz7PueTV-InNon4xC4W" version="14.4.6" type="github" pages="2">
   <diagram id="2R1Mtc9ovGN57bQ98XRX" name="organisation">
     <mxGraphModel dx="1822" dy="773" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -482,6 +482,36 @@
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="1340" y="954" as="targetPoint" />
             <mxPoint x="1471" y="954" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="vJ0WOf1Jvo017B-ebiF--0" value="sirius-web-interpreter" style="verticalAlign=top;align=left;spacingTop=8;spacingLeft=2;spacingRight=12;shape=cube;size=10;direction=south;fontStyle=4;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="dofqXAE8lk_pSGYmfNcJ-1">
+          <mxGeometry x="160" y="710" width="190" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="vJ0WOf1Jvo017B-ebiF--2" value="sirius-web-emf" style="verticalAlign=top;align=left;spacingTop=8;spacingLeft=2;spacingRight=12;shape=cube;size=10;direction=south;fontStyle=4;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="dofqXAE8lk_pSGYmfNcJ-1">
+          <mxGeometry x="150" y="828" width="190" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="vJ0WOf1Jvo017B-ebiF--3" value="sirius-web-graphql" style="verticalAlign=top;align=left;spacingTop=8;spacingLeft=2;spacingRight=12;shape=cube;size=10;direction=south;fontStyle=4;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="dofqXAE8lk_pSGYmfNcJ-1">
+          <mxGeometry x="360" y="828" width="190" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="vJ0WOf1Jvo017B-ebiF--4" value="sirius-web-compatibility" style="verticalAlign=top;align=left;spacingTop=8;spacingLeft=2;spacingRight=12;shape=cube;size=10;direction=south;fontStyle=4;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="dofqXAE8lk_pSGYmfNcJ-1">
+          <mxGeometry x="-60" y="828" width="190" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="vJ0WOf1Jvo017B-ebiF--5" value="" style="endArrow=open;endFill=1;endSize=12;html=1;exitX=0;exitY=0;exitDx=56;exitDy=100;exitPerimeter=0;entryX=0;entryY=0;entryDx=0;entryDy=90;entryPerimeter=0;" edge="1" parent="dofqXAE8lk_pSGYmfNcJ-1" source="vJ0WOf1Jvo017B-ebiF--0" target="vJ0WOf1Jvo017B-ebiF--4">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="490" y="670" as="sourcePoint" />
+            <mxPoint x="650" y="670" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="vJ0WOf1Jvo017B-ebiF--6" value="" style="endArrow=open;endFill=1;endSize=12;html=1;exitX=0;exitY=0;exitDx=56;exitDy=100;exitPerimeter=0;entryX=0;entryY=0;entryDx=0;entryDy=90;entryPerimeter=0;" edge="1" parent="dofqXAE8lk_pSGYmfNcJ-1" source="vJ0WOf1Jvo017B-ebiF--0" target="vJ0WOf1Jvo017B-ebiF--2">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="490" y="670" as="sourcePoint" />
+            <mxPoint x="650" y="670" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="vJ0WOf1Jvo017B-ebiF--7" value="" style="endArrow=open;endFill=1;endSize=12;html=1;exitX=0;exitY=0;exitDx=56;exitDy=100;exitPerimeter=0;entryX=0;entryY=0;entryDx=0;entryDy=90;entryPerimeter=0;" edge="1" parent="dofqXAE8lk_pSGYmfNcJ-1" source="vJ0WOf1Jvo017B-ebiF--0" target="vJ0WOf1Jvo017B-ebiF--3">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="490" y="670" as="sourcePoint" />
+            <mxPoint x="650" y="670" as="targetPoint" />
           </mxGeometry>
         </mxCell>
       </root>
