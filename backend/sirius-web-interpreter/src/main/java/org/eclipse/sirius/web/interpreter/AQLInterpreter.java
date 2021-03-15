@@ -63,7 +63,6 @@ public class AQLInterpreter {
 
     private final Map<AQLEntry, Pair<LoadingCache<String, AstResult>, IQueryEnvironment>> elements;
 
-
     public AQLInterpreter() {
         elements = new HashMap<>();
     }

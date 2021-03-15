@@ -12,20 +12,19 @@
  *******************************************************************************/
 package org.eclipse.sirius.web.graphql.datafetchers.object;
 
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.OptionalInt;
-
+import graphql.schema.DataFetchingEnvironment;
 import org.eclipse.sirius.web.annotations.spring.graphql.QueryDataFetcher;
 import org.eclipse.sirius.web.graphql.schema.ObjectTypeProvider;
 import org.eclipse.sirius.web.interpreter.AQLEntry;
-import org.eclipse.sirius.web.interpreter.AQLInterpreter;
 import org.eclipse.sirius.web.interpreter.AQLInterpreterAPI;
 import org.eclipse.sirius.web.interpreter.Result;
 import org.eclipse.sirius.web.representations.VariableManager;
 import org.eclipse.sirius.web.spring.graphql.api.IDataFetcherWithFieldCoordinates;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import graphql.schema.DataFetchingEnvironment;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.OptionalInt;
 
 /**
  * Computes the expression to get an Int.
@@ -44,13 +43,17 @@ import graphql.schema.DataFetchingEnvironment;
 @QueryDataFetcher(type = ObjectTypeProvider.TYPE, field = ObjectTypeProvider.EXPRESSION_BASED_INT_FIELD)
 public class ObjectExpressionBasedIntDataFetcher implements IDataFetcherWithFieldCoordinates<Integer> {
 
+    private final AQLInterpreterAPI interpreterAPI;
+
+    @Autowired
+    public ObjectExpressionBasedIntDataFetcher(AQLInterpreterAPI interpreterAPI) {
+        this.interpreterAPI = interpreterAPI;
+    }
+
     @Override
     public Integer get(DataFetchingEnvironment environment) throws Exception {
         Object object = environment.getSource();
         String expression = environment.getArgument(ObjectTypeProvider.EXPRESSION_ARGUMENT);
-
-        AQLInterpreter interpreter = new AQLInterpreter();
-        AQLInterpreterAPI interpreterAPI = new AQLInterpreterAPI(interpreter);
         AQLEntry entry = interpreterAPI.initializeUser(new ArrayList<>(), new ArrayList<>());
         Result result = interpreterAPI.evaluateExpression(Map.of(VariableManager.SELF, object), expression, entry);
         OptionalInt optionalInt = result.asInt();
